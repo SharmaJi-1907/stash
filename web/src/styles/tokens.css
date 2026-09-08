@@ -1,0 +1,5 @@
+/* Design tokens — the single source of colour, type, space, radius and motion.
+ * Every component reads from here. No hard-coded values in component code.
+ * Spec: 04-DESIGN-SYSTEM.md §3, §4, §5 · rule 06-AGENT-BUILD-GUIDE.md §1.5
+ * P2 task 3 — not yet written.
+ */

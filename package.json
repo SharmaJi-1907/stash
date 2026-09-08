@@ -1,0 +1,36 @@
+{
+  "name": "stash",
+  "private": true,
+  "version": "1.0.0",
+  "description": "A private, cross-platform save-for-later shelf for products found anywhere on the internet.",
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "worker",
+    "web"
+  ],
+  "engines": {
+    "node": ">=22",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev:worker": "npm run dev --workspace worker",
+    "dev:web": "npm run dev --workspace web",
+    "build": "npm run build --workspace shared && npm run build --workspace web",
+    "deploy:worker": "npm run deploy --workspace worker",
+    "deploy:web": "npm run deploy --workspace web",
+    "migrate:local": "npm run migrate:local --workspace worker",
+    "migrate:remote": "npm run migrate:remote --workspace worker",
+    "test": "npm run test --workspaces --if-present",
+    "test:fixtures": "npm run test:fixtures --workspace worker",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "check:secrets": "bash scripts/check-secrets.sh"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "esbuild@0.25.12": true,
+    "workerd@1.20260815.1": true,
+    "workerd@1.20260907.1": true
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Stash",
+  "version": "1.0.0",
+  "description": "Save the current page to your Stash shelf.",
+  "permissions": ["activeTab", "contextMenus", "scripting", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Stash this page"
+  },
+  "options_page": "src/options/options.html",
+  "commands": {
+    "stash-page": {
+      "suggested_key": { "default": "Ctrl+Shift+S" },
+      "description": "Save the current page to Stash"
+    }
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "stash@localhost",
+      "strict_min_version": "121.0"
+    }
+  }
+}

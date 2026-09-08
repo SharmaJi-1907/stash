@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stash — first draft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TOKENS — 04-DESIGN-SYSTEM.md §3 §4 §5
+   ============================================================ */
+:root{
+  --bg:#101620; --surface:#161E2B; --surface-raised:#1E2836; --surface-lit:#26313F;
+  --line:#2B3746; --line-strong:#3A4859;
+  --text:#E9EBF0; --text-dim:#97A3B6; --text-faint:#626F82;
+  --signal:#E8B84B; --signal-dim:#8A6E2A;
+  --settled:#5DA096; --drop:#C4736B;
+
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-cond:"IBM Plex Sans Condensed",var(--font);
+
+  --t-display:28px; --t-lg:20px; --t-md:16px; --t-base:15px; --t-sm:13px; --t-xs:12px;
+
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:40px;
+
+  --r-card:10px; --r-input:6px; --r-sheet:16px; --r-pill:999px;
+}
+[data-theme="light"]{
+  --bg:#F2F3F6; --surface:#FFFFFF; --surface-raised:#FFFFFF; --surface-lit:#E8EBF1;
+  --line:#DDE1E8; --line-strong:#C3CAD6;
+  --text:#161C26; --text-dim:#5C6879; --text-faint:#8C97A6;
+  --signal:#A67908; --signal-dim:#D9C089;
+  --settled:#3D7A70; --drop:#A8483F;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex; flex-direction:column; align-items:center;
+  padding:var(--s5) var(--s4) var(--s6);
+  gap:var(--s5);
+  transition:background 200ms ease;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px;border-radius:2px}
+ul{list-style:none}
+
+/* ============================================================
+   PAGE CHROME (prototype scaffolding, not part of the app)
+   ============================================================ */
+.pagehead{max-width:760px;width:100%;display:flex;flex-direction:column;gap:var(--s2)}
+.pagehead h1{font-size:var(--t-display);font-weight:600;letter-spacing:-.011em}
+.pagehead p{font-size:var(--t-base);color:var(--text-dim);max-width:62ch;line-height:1.55}
+
+.controls{
+  display:flex;gap:var(--s2);flex-wrap:wrap;align-items:center;
+  max-width:760px;width:100%;
+  padding-top:var(--s2);
+}
+.ctl{
+  height:32px;padding:0 var(--s3);border-radius:var(--r-pill);
+  background:var(--surface-raised);border:1px solid var(--line);
+  color:var(--text-dim);font-size:var(--t-sm);
+  transition:background 120ms,color 120ms,border-color 120ms;
+}
+.ctl:hover{color:var(--text)}
+.ctl[aria-pressed="true"]{background:var(--surface-lit);color:var(--text);border-color:var(--line-strong)}
+.ctl-sep{width:1px;height:20px;background:var(--line);margin:0 var(--s1)}
+
+/* ============================================================
+   DEVICE FRAME
+   ============================================================ */
+.device{
+  width:392px;height:800px;
+  background:var(--bg);
+  border:1px solid var(--line-strong);
+  border-radius:28px;
+  overflow:hidden;
+  position:relative;
+  display:flex;flex-direction:column;
+  box-shadow:0 0 0 8px color-mix(in srgb,var(--line) 30%,transparent);
+}
+@media (max-width:460px){
+  .device{width:100%;height:min(800px,88vh);border-radius:20px}
+  body{padding:var(--s4) var(--s3) var(--s5)}
+}
+
+.statusbar{
+  height:28px;flex:none;display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--s4);font-size:11px;color:var(--text-faint);
+  font-variant-numeric:tabular-nums;
+}
+
+/* ============================================================
+   APP — TOP BAR
+   ============================================================ */
+.topbar{
+  flex:none;padding:var(--s3) var(--s4) var(--s2);
+  display:flex;align-items:baseline;justify-content:space-between;gap:var(--s3);
+}
+.topbar h2{font-size:var(--t-display);font-weight:600;letter-spacing:-.011em;line-height:1.15}
+.count{font-size:var(--t-sm);color:var(--text-faint);font-variant-numeric:tabular-nums}
+
+.viewtoggle{display:flex;gap:2px;background:var(--surface);border-radius:var(--r-input);padding:2px}
+.viewtoggle button{
+  padding:5px 10px;border-radius:4px;font-size:var(--t-sm);color:var(--text-faint);
+  display:flex;align-items:center;
+}
+.viewtoggle button[aria-pressed="true"]{background:var(--surface-lit);color:var(--text)}
+
+/* search */
+.searchwrap{flex:none;padding:0 var(--s4) var(--s2)}
+.search{
+  width:100%;height:36px;border-radius:var(--r-input);
+  background:var(--surface);border:1px solid var(--line);
+  padding:0 var(--s3);font-size:var(--t-base);color:var(--text);
+  font-family:var(--font);
+}
+.search::placeholder{color:var(--text-faint)}
+.search:focus{outline:none;border-color:var(--line-strong);background:var(--surface-raised)}
+
+/* filter chips */
+.chips{
+  flex:none;display:flex;gap:var(--s2);padding:0 var(--s4) var(--s3);
+  overflow-x:auto;scrollbar-width:none;
+}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;height:32px;padding:0 var(--s3);border-radius:var(--r-pill);
+  background:var(--surface-raised);border:1px solid var(--line);
+  color:var(--text-dim);font-size:var(--t-sm);white-space:nowrap;
+  transition:background 120ms,color 120ms,border-color 120ms;
+}
+.chip[aria-pressed="true"]{background:var(--surface-lit);color:var(--text);border-color:var(--line-strong)}
+
+/* ============================================================
+   SHELF — STACK VIEW  §5.3 §7.1
+   ============================================================ */
+.shelf{flex:1;overflow-y:auto;overscroll-behavior:contain}
+.shelf::-webkit-scrollbar{width:0}
+
+.stack{padding:0 var(--s4) 96px}
+
+.card{
+  position:relative;
+  height:112px;                       /* fixed — §7.1 */
+  background:var(--surface);
+  border-radius:var(--r-card);
+  padding:var(--s3);
+  display:flex;gap:var(--s3);
+  margin-bottom:var(--s2);
+  overflow:hidden;
+  cursor:pointer;
+  transition:background 90ms ease, transform 180ms ease, height 180ms ease,
+             margin 180ms ease, opacity 180ms ease;
+  touch-action:pan-y;
+}
+.card:hover,.card:active{background:var(--surface-lit)}
+
+/* stale rule — the one structural device. §6 */
+.card[data-age="stale"]::before,
+.card[data-age="old"]::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--signal);
+}
+.card[data-age="stale"] .thumb{opacity:.88}
+.card[data-age="old"] .thumb{opacity:.75}
+
+.thumb{
+  flex:none;width:88px;height:88px;border-radius:8px;overflow:hidden;
+  background:var(--surface-raised);
+  transition:opacity 180ms ease;
+}
+.thumb svg{display:block;width:100%;height:100%}
+
+.body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
+
+.title{
+  font-size:var(--t-md);font-weight:500;color:var(--text);line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.rowa{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s2)}
+.price{font-size:var(--t-sm);color:var(--text);font-variant-numeric:tabular-nums;flex:none}
+.price.none{color:var(--text-faint)}
+.site{font-size:var(--t-sm);color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta{font-size:var(--t-sm);color:var(--text-faint);display:flex;gap:6px;align-items:baseline}
+.card[data-age="old"] .age{color:var(--signal)}
+.ask{
+  color:var(--text-dim);border-bottom:1px solid var(--line-strong);
+  padding-bottom:1px;font-size:var(--t-sm);
+}
+.ask:hover{color:var(--text);border-color:var(--text-dim)}
+
+/* syncing state */
+.card[data-sync="pending"] .title::after{
+  content:"";display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:var(--text-faint);margin-left:6px;vertical-align:middle;
+  animation:pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* swipe affordance layer */
+.swipebg{
+  position:absolute;inset:0;display:flex;align-items:center;
+  padding:0 var(--s5);font-size:var(--t-sm);font-weight:500;
+  opacity:0;pointer-events:none;
+}
+.swipebg.right{background:var(--settled);color:#0B1614;justify-content:flex-start}
+.swipebg.left{background:var(--drop);color:#1A0E0C;justify-content:flex-end}
+
+.card.committing{height:0;margin-bottom:0;padding-top:0;padding-bottom:0;opacity:0}
+
+/* ============================================================
+   SHELF — BOARD VIEW  §5.4
+   ============================================================ */
+.board{padding:0 var(--s4) 96px;display:grid;grid-template-columns:1fr 1fr;gap:var(--s2)}
+.bcard{
+  background:var(--surface);border-radius:var(--r-card);overflow:hidden;cursor:pointer;
+  position:relative;transition:background 90ms;
+}
+.bcard:hover{background:var(--surface-lit)}
+.bcard[data-age="stale"]::before,.bcard[data-age="old"]::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--signal);z-index:1;
+}
+.bcard .bimg{aspect-ratio:1;background:var(--surface-raised)}
+.bcard .bimg svg{display:block;width:100%;height:100%}
+.bcard[data-age="old"] .bimg{opacity:.75}
+.bcard .bmeta{padding:var(--s2) var(--s3) var(--s3)}
+.bcard .btitle{
+  font-size:var(--t-sm);color:var(--text);line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  min-height:35px;
+}
+.bcard .bprice{font-size:var(--t-sm);color:var(--text-dim);margin-top:2px;font-variant-numeric:tabular-nums}
+
+/* ============================================================
+   EMPTY STATE  §7.6
+   ============================================================ */
+.empty{
+  padding:var(--s6) var(--s5);text-align:center;
+  display:flex;flex-direction:column;gap:var(--s2);align-items:center;
+}
+.empty strong{font-size:var(--t-md);font-weight:600;color:var(--text)}
+.empty span{font-size:var(--t-base);color:var(--text-dim);line-height:1.5;max-width:30ch}
+
+/* ============================================================
+   FAB
+   ============================================================ */
+.fab{
+  position:absolute;right:var(--s4);bottom:var(--s4);
+  height:48px;padding:0 var(--s4);border-radius:var(--r-pill);
+  background:var(--surface-lit);border:1px solid var(--line-strong);
+  color:var(--text);font-size:var(--t-base);font-weight:500;
+  display:flex;align-items:center;gap:var(--s2);
+  transition:background 120ms;
+}
+.fab:hover{background:var(--surface-raised)}
+
+/* ============================================================
+   SHEET (detail + capture)
+   ============================================================ */
+.scrim{
+  position:absolute;inset:0;background:rgba(6,10,16,.55);
+  opacity:0;pointer-events:none;transition:opacity 180ms ease;z-index:5;
+}
+.scrim.open{opacity:1;pointer-events:auto}
+
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;z-index:6;
+  background:var(--surface);
+  border-radius:var(--r-sheet) var(--r-sheet) 0 0;
+  border-top:1px solid var(--line);
+  transform:translateY(100%);
+  transition:transform 220ms cubic-bezier(.2,.8,.2,1);
+  max-height:88%;display:flex;flex-direction:column;
+}
+.sheet.open{transform:translateY(0)}
+.grab{width:36px;height:4px;border-radius:2px;background:var(--line-strong);margin:var(--s3) auto var(--s2)}
+.sheetbody{padding:0 var(--s4) var(--s4);overflow-y:auto}
+
+.hero{width:100%;aspect-ratio:16/10;border-radius:var(--r-card);overflow:hidden;background:var(--surface-raised)}
+.hero svg{display:block;width:100%;height:100%}
+
+.dtitle{font-size:var(--t-lg);font-weight:600;letter-spacing:-.011em;line-height:1.3;margin-top:var(--s4)}
+.dmeta{font-size:var(--t-sm);color:var(--text-dim);margin-top:var(--s2);display:flex;gap:6px;flex-wrap:wrap}
+.dnote{
+  font-size:var(--t-base);color:var(--text-dim);line-height:1.55;margin-top:var(--s3);
+  padding-left:var(--s3);border-left:1px solid var(--line-strong);
+}
+.dprice{font-size:var(--t-lg);font-weight:600;margin-top:var(--s3);font-variant-numeric:tabular-nums}
+
+.actions{display:flex;gap:var(--s2);margin-top:var(--s5)}
+.act{
+  flex:1;height:44px;border-radius:var(--r-input);border:1px solid var(--line);
+  background:var(--surface-raised);font-size:var(--t-base);font-weight:500;color:var(--text);
+  transition:background 120ms,border-color 120ms;
+}
+.act:hover{background:var(--surface-lit)}
+.act.bought{border-color:var(--settled);color:var(--settled)}
+.act.drop{border-color:var(--drop);color:var(--drop)}
+.act.open{background:var(--surface-lit)}
+
+/* ============================================================
+   CAPTURE  §7.3 — save enabled from frame one
+   ============================================================ */
+.cap{padding:var(--s4)}
+.caphead{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s5)}
+.caphead .back{font-size:var(--t-lg);color:var(--text-dim);line-height:1}
+.caphead h3{font-size:var(--t-lg);font-weight:600;letter-spacing:-.011em}
+
+.preview{display:flex;gap:var(--s3);align-items:flex-start}
+.preview .thumb{width:88px;height:88px}
+.pv-text{flex:1;min-width:0;padding-top:2px}
+.pv-title{font-size:var(--t-md);font-weight:500;line-height:1.35;min-height:44px}
+.pv-title.loading{color:var(--text-faint)}
+.pv-site{font-size:var(--t-sm);color:var(--text-dim);margin-top:var(--s2)}
+.pv-price{font-size:var(--t-sm);margin-top:2px;font-variant-numeric:tabular-nums}
+
+/* the one orchestrated moment §7.4 */
+.assemble-frame{animation:frameIn 160ms ease both}
+.assemble-title{animation:titleIn 200ms 60ms ease both}
+.assemble-img{animation:imgIn 260ms 180ms ease both}
+.assemble-price{animation:priceIn 200ms 340ms ease both}
+@keyframes frameIn{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}
+@keyframes titleIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+@keyframes imgIn{from{opacity:0}to{opacity:1}}
+@keyframes priceIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+.field{margin-top:var(--s5)}
+.field textarea{
+  width:100%;min-height:76px;resize:none;
+  background:var(--surface-raised);border:1px solid var(--line);
+  border-radius:var(--r-input);padding:var(--s3);
+  font-family:var(--font);font-size:var(--t-base);color:var(--text);line-height:1.5;
+}
+.field textarea::placeholder{color:var(--text-faint)}
+.field textarea:focus{outline:none;border-color:var(--line-strong)}
+
+.select{
+  margin-top:var(--s3);height:40px;width:100%;
+  background:var(--surface-raised);border:1px solid var(--line);
+  border-radius:var(--r-input);padding:0 var(--s3);
+  font-family:var(--font);font-size:var(--t-base);color:var(--text);
+}
+.select:focus{outline:none;border-color:var(--line-strong)}
+
+.primary{
+  margin-top:var(--s5);width:100%;height:48px;border-radius:var(--r-input);
+  background:var(--surface-lit);border:1px solid var(--line-strong);
+  font-size:var(--t-base);font-weight:600;color:var(--text);
+  transition:background 120ms;
+}
+.primary:hover{background:var(--surface-raised)}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast{
+  position:absolute;left:var(--s4);right:var(--s4);bottom:var(--s4);z-index:20;
+  height:48px;border-radius:var(--r-input);
+  background:var(--surface-raised);border:1px solid var(--line-strong);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 var(--s4);font-size:var(--t-base);
+  transform:translateY(calc(100% + 24px));opacity:0;
+  transition:transform 200ms cubic-bezier(.2,.8,.2,1),opacity 200ms;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast button{color:var(--signal);font-weight:600;font-size:var(--t-base)}
+
+/* ============================================================
+   LEGEND (prototype scaffolding)
+   ============================================================ */
+.legend{
+  max-width:760px;width:100%;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--s4);
+  padding-top:var(--s3);
+}
+.leg{
+  border-top:1px solid var(--line);padding-top:var(--s3);
+  display:flex;flex-direction:column;gap:6px;
+}
+.leg b{font-size:var(--t-sm);font-weight:600;color:var(--text)}
+.leg span{font-size:var(--t-sm);color:var(--text-dim);line-height:1.5}
+
+.note{
+  max-width:760px;width:100%;font-size:var(--t-sm);color:var(--text-faint);
+  line-height:1.6;border-top:1px solid var(--line);padding-top:var(--s3);
+}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+}
+</style>
+</head>
+<body>
+
+<header class="pagehead">
+  <h1>Stash — first draft</h1>
+  <p>A working slice of the shelf, built from the tokens in <code>04-DESIGN-SYSTEM.md</code>.
+     Everything below is real: the colours, the type scale, the 112px card, the stale rule,
+     the swipe, the assembly moment. Drag a card sideways. Tap one. Try the save flow.</p>
+</header>
+
+<nav class="controls">
+  <button class="ctl" id="btnTheme">Light theme</button>
+  <span class="ctl-sep"></span>
+  <button class="ctl" id="btnCapture">Show the save flow</button>
+  <button class="ctl" id="btnEmpty">Show empty state</button>
+  <button class="ctl" id="btnReset">Reset</button>
+</nav>
+
+<!-- ================= DEVICE ================= -->
+<div class="device" id="device">
+
+  <div class="statusbar"><span>21:48</span><span>Stash</span></div>
+
+  <!-- APP -->
+  <div id="app" style="display:flex;flex-direction:column;flex:1;min-height:0">
+
+    <div class="topbar">
+      <div>
+        <h2>Your shelf</h2>
+        <div class="count" id="count">14 open · 3 going stale</div>
+      </div>
+      <div class="viewtoggle" role="group" aria-label="View">
+        <button id="vStack" aria-pressed="true">Stack</button>
+        <button id="vBoard" aria-pressed="false">Board</button>
+      </div>
+    </div>
+
+    <div class="searchwrap">
+      <input class="search" id="search" type="search" placeholder="Search titles, notes, sites">
+    </div>
+
+    <div class="chips" role="group" aria-label="Filters">
+      <button class="chip" aria-pressed="true" data-cat="all">All</button>
+      <button class="chip" aria-pressed="false" data-cat="Gadgets">Gadgets</button>
+      <button class="chip" aria-pressed="false" data-cat="Home">Home</button>
+      <button class="chip" aria-pressed="false" data-cat="Software">Software &amp; Tools</button>
+      <button class="chip" aria-pressed="false" data-cat="Clothing">Clothing</button>
+      <button class="chip" aria-pressed="false" data-cat="Books">Books</button>
+    </div>
+
+    <div class="shelf" id="shelf">
+      <ul class="stack" id="stack"></ul>
+      <div class="board" id="board" style="display:none"></div>
+      <div class="empty" id="empty" style="display:none">
+        <strong>Nothing on the shelf yet.</strong>
+        <span>Share a link here from any app, or paste one below.</span>
+      </div>
+    </div>
+
+    <button class="fab" id="fab">Paste a link</button>
+  </div>
+
+  <!-- CAPTURE SCREEN -->
+  <div id="capture" style="display:none;flex:1;overflow-y:auto">
+    <div class="cap">
+      <div class="caphead">
+        <button class="back" id="capBack" aria-label="Back">&larr;</button>
+        <h3>Save</h3>
+      </div>
+
+      <div class="preview" id="capPreview">
+        <div class="thumb" id="capThumb"></div>
+        <div class="pv-text">
+          <div class="pv-title loading" id="capTitle">Fetching…</div>
+          <div class="pv-site" id="capSite">amazon.in</div>
+          <div class="pv-price" id="capPrice"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <textarea id="capNote" placeholder="Add a note — why you saved it, what size, what for"></textarea>
+        <select class="select" id="capCat">
+          <option>Gadgets</option><option>Home</option>
+          <option>Software &amp; Tools</option><option>Clothing</option>
+          <option>Books</option><option>Other</option>
+        </select>
+      </div>
+
+      <button class="primary" id="capSave">Save</button>
+    </div>
+  </div>
+
+  <!-- DETAIL SHEET -->
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Item">
+    <div class="grab"></div>
+    <div class="sheetbody">
+      <div class="hero" id="dHero"></div>
+      <h3 class="dtitle" id="dTitle"></h3>
+      <div class="dmeta" id="dMeta"></div>
+      <div class="dprice" id="dPrice"></div>
+      <p class="dnote" id="dNote"></p>
+      <div class="actions">
+        <button class="act bought" data-do="bought">Bought</button>
+        <button class="act drop" data-do="dropped">Drop</button>
+        <button class="act open" data-do="open">Open original</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"><span id="toastMsg"></span><button id="toastUndo">Undo</button></div>
+</div>
+
+<section class="legend">
+  <div class="leg"><b>The interface has no colour</b><span>Every saturated pixel comes from a product. Surfaces are cool blue-greys; category and tag are plain text, never coloured chips.</span></div>
+  <div class="leg"><b>A list, not a grid</b><span>Stack is the default because a list is a processing instrument. Board exists for visual recall — toggle it above.</span></div>
+  <div class="leg"><b>Age is drawn, not written</b><span>Past 30 days a brass rule appears on the left edge and the image starts to fade. It is the only element in the product that uses that device.</span></div>
+  <div class="leg"><b>One orchestrated moment</b><span>The save assembly is the entire motion budget. No entrance animations on scroll, no hover lift on cards.</span></div>
+</section>
+
+<p class="note">
+  Product images here are generated SVG stand-ins — the real app copies the source image into R2 at save time.
+  Card height is fixed at 112px, radii vary by role (10px cards, 6px inputs, 16px sheets), there are no shadows anywhere,
+  and elevation is expressed purely through surface lightness.
+</p>
+
+<script>
+/* ============================================================
+   SVG stand-ins. Colour lives here and nowhere else.
+   ============================================================ */
+const ART = {
+  keyboard:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1F2E3D"/><rect x="10" y="34" width="80" height="38" rx="5" fill="#E8E3D8"/><rect x="10" y="34" width="80" height="6" rx="3" fill="#C9C2B4"/><g fill="#8E5A3C">${[0,1,2,3,4,5,6,7].map(i=>`<rect x="${15+i*9}" y="45" width="6" height="6" rx="1.5"/>`).join('')}${[0,1,2,3,4,5,6].map(i=>`<rect x="${19+i*9}" y="55" width="6" height="6" rx="1.5"/>`).join('')}</g><rect x="30" y="64" width="34" height="5" rx="2" fill="#8E5A3C"/></svg>`,
+  riser:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#2A2118"/><rect x="8" y="52" width="84" height="12" rx="2" fill="#B8874F"/><rect x="8" y="64" width="84" height="20" rx="2" fill="#96683A"/><rect x="18" y="70" width="30" height="9" rx="1.5" fill="#6E4A26"/><rect x="54" y="70" width="30" height="9" rx="1.5" fill="#6E4A26"/><rect x="30" y="24" width="40" height="26" rx="2" fill="#404E5C"/><rect x="33" y="27" width="34" height="20" rx="1" fill="#6E8BA6"/></svg>`,
+  headphones:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#161C2C"/><path d="M22 60V48a28 28 0 0156 0v12" stroke="#D94F5C" stroke-width="7" fill="none" stroke-linecap="round"/><rect x="12" y="54" width="18" height="30" rx="8" fill="#E8656F"/><rect x="70" y="54" width="18" height="30" rx="8" fill="#E8656F"/><rect x="16" y="60" width="10" height="18" rx="5" fill="#8E2E38"/><rect x="74" y="60" width="10" height="18" rx="5" fill="#8E2E38"/></svg>`,
+  lamp:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#151F1C"/><path d="M34 22h32l10 26H24z" fill="#F0C36B"/><rect x="47" y="48" width="6" height="30" fill="#4C5A56"/><ellipse cx="50" cy="82" rx="22" ry="6" fill="#3B4744"/><ellipse cx="50" cy="52" rx="20" ry="5" fill="#FBE3AC" opacity=".35"/></svg>`,
+  sneaker:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#20242E"/><path d="M14 62c6-14 14-20 22-20l8 10 16-6c10 0 24 8 26 18v6H14z" fill="#F2F0EA"/><rect x="12" y="70" width="78" height="9" rx="4" fill="#4A8FB8"/><path d="M40 46l16 10" stroke="#4A8FB8" stroke-width="4" stroke-linecap="round"/><path d="M32 50l14 10" stroke="#4A8FB8" stroke-width="4" stroke-linecap="round"/></svg>`,
+  book:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1A1F2E"/><rect x="26" y="16" width="48" height="68" rx="3" fill="#7A9E6E"/><rect x="26" y="16" width="8" height="68" fill="#5C7A52"/><rect x="42" y="32" width="24" height="3" rx="1.5" fill="#E4EDDF"/><rect x="42" y="41" width="18" height="3" rx="1.5" fill="#E4EDDF"/><rect x="42" y="62" width="14" height="3" rx="1.5" fill="#C2D4BA"/></svg>`,
+  software:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#171C2B"/><rect x="14" y="22" width="72" height="52" rx="5" fill="#242C40"/><rect x="14" y="22" width="72" height="11" rx="5" fill="#33405C"/><circle cx="22" cy="27.5" r="2.5" fill="#8FA6D9"/><circle cx="30" cy="27.5" r="2.5" fill="#8FA6D9"/><path d="M32 46l-8 8 8 8M62 46l8 8-8 8M52 42l-8 24" stroke="#7FD4C1" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  chair:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#231C24"/><rect x="30" y="18" width="40" height="34" rx="6" fill="#8B6FA8"/><rect x="24" y="52" width="52" height="12" rx="4" fill="#6E5387"/><rect x="30" y="64" width="6" height="20" fill="#443652"/><rect x="64" y="64" width="6" height="20" fill="#443652"/><rect x="24" y="82" width="52" height="5" rx="2.5" fill="#443652"/></svg>`,
+  camera:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#1B1E24"/><rect x="14" y="32" width="72" height="42" rx="7" fill="#3A4048"/><rect x="36" y="24" width="22" height="10" rx="3" fill="#3A4048"/><circle cx="50" cy="53" r="17" fill="#22262C"/><circle cx="50" cy="53" r="11" fill="#4E7FA6"/><circle cx="45" cy="48" r="3.5" fill="#A9CBE3"/><rect x="70" y="38" width="9" height="5" rx="2" fill="#E8B84B"/></svg>`,
+  bottle:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#152227"/><rect x="42" y="12" width="16" height="12" rx="2" fill="#4E6B72"/><path d="M38 24h24v54a8 8 0 01-8 8h-8a8 8 0 01-8-8z" fill="#5FA8A0"/><rect x="38" y="46" width="24" height="16" fill="#3F7F79"/></svg>`,
+  monitor:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#151A24"/><rect x="10" y="20" width="80" height="48" rx="4" fill="#2C3543"/><rect x="14" y="24" width="72" height="40" rx="2" fill="#5C7FA8"/><rect x="44" y="68" width="12" height="12" fill="#2C3543"/><rect x="32" y="80" width="36" height="5" rx="2.5" fill="#2C3543"/></svg>`,
+  kurta:`<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="#241A20"/><path d="M36 20l14 6 14-6 18 10-8 14-6-3v43H32V41l-6 3-8-14z" fill="#C46A8B"/><path d="M50 26v47" stroke="#9C4F6C" stroke-width="2.5"/><circle cx="50" cy="36" r="2" fill="#F0D8E2"/><circle cx="50" cy="48" r="2" fill="#F0D8E2"/></svg>`
+};
+
+/* ============================================================
+   Data
+   ============================================================ */
+let ITEMS = [
+  {id:1, art:'keyboard', title:'Keychron K2 Pro 75% wireless mechanical keyboard, brown switches', price:'₹8,999', site:'amazon.in', cat:'Gadgets', age:4, note:'Brown switches, not blue. Blue is too loud for the shared desk.'},
+  {id:2, art:'riser', title:'Solid sheesham monitor riser with a drawer underneath', price:'₹1,450', site:'pepperfry.com', cat:'Home', age:47, note:'Measured the desk — needs to be under 55cm wide.'},
+  {id:3, art:'software', title:'Raycast Pro — yearly plan', price:'₹6,400', site:'raycast.com', cat:'Software', age:12, note:'Wait for the Black Friday discount, it was 40% last year.'},
+  {id:4, art:'headphones', title:'Sony WH-1000XM5 over-ear noise cancelling', price:'₹26,990', site:'croma.com', cat:'Gadgets', age:94, note:'Seen this cheaper during a sale. Not urgent.'},
+  {id:5, art:'lamp', title:'Brass table lamp with a linen shade, warm bulb', price:'₹2,199', site:'urbanladder.com', cat:'Home', age:2, note:''},
+  {id:6, art:'sneaker', title:'New Balance 574 Core, grey', price:'₹7,499', site:'ajio.com', cat:'Clothing', age:19, note:'Size 9. Check the return window before ordering.'},
+  {id:7, art:'book', title:'The Design of Everyday Things — Don Norman, revised edition', price:'₹549', site:'amazon.in', cat:'Books', age:33, note:''},
+  {id:8, art:'camera', title:'Fujifilm X-T30 II body only, silver', price:'₹74,999', site:'flipkart.com', cat:'Gadgets', age:8, note:'Body only. Already have the 35mm.'},
+  {id:9, art:'chair', title:'Ergonomic mesh chair with adjustable lumbar support', price:'₹12,300', site:'wakefit.co', cat:'Home', age:61, note:'Try one at the store first. Cannot judge a chair from photos.'},
+  {id:10,art:'monitor', title:'Dell S2722QC 27-inch 4K USB-C monitor', price:'₹32,499', site:'dell.com', cat:'Gadgets', age:6, note:''},
+  {id:11,art:'bottle', title:'Insulated steel bottle, 750ml, matte finish', price:'₹899', site:'instagram.com', cat:'Home', age:1, note:'Saw this in a reel. No product page — added by hand.', manual:true},
+  {id:12,art:'kurta', title:'Handloom cotton kurta, deep rose', price:'₹1,899', site:'myntra.com', cat:'Clothing', age:15, note:''},
+  {id:13,art:'software', title:'Obsidian Sync — annual', price:'', site:'obsidian.md', cat:'Software', age:38, note:'Or just use a git repo. Decide.'},
+  {id:14,art:'keyboard', title:'Low-profile aluminium wrist rest, walnut', price:'₹1,150', site:'thepenstore.in', cat:'Gadgets', age:9, note:''}
+];
+
+const $ = id => document.getElementById(id);
+let view='stack', filter='all', query='', lastRemoved=null, emptyMode=false;
+
+const ageBand = d => d>=60 ? 'old' : d>=30 ? 'stale' : 'fresh';
+const catLabel = c => c==='Software' ? 'Software' : c;
+
+function visible(){
+  if(emptyMode) return [];
+  return ITEMS.filter(i=>{
+    if(filter!=='all' && i.cat!==filter) return false;
+    if(query){
+      const hay=(i.title+' '+i.note+' '+i.site+' '+i.cat).toLowerCase();
+      if(!hay.includes(query.toLowerCase())) return false;
+    }
+    return true;
+  });
+}
+
+/* ---------- render ---------- */
+function render(){
+  const list = visible();
+  const stale = ITEMS.filter(i=>i.age>=30).length;
+  $('count').textContent = `${ITEMS.length} open${stale?` · ${stale} going stale`:''}`;
+
+  const isEmpty = list.length===0;
+  $('empty').style.display = isEmpty?'flex':'none';
+  $('stack').style.display = (!isEmpty && view==='stack')?'block':'none';
+  $('board').style.display = (!isEmpty && view==='board')?'grid':'none';
+
+  if(isEmpty){
+    const e=$('empty');
+    if(emptyMode){
+      e.innerHTML='<strong>Nothing on the shelf yet.</strong><span>Share a link here from any app, or paste one below.</span>';
+    }else if(query){
+      e.innerHTML='<strong>No matches for that.</strong><span>Try the site name, or a word from your note.</span>';
+    }else{
+      e.innerHTML=`<strong>Nothing open in ${catLabel(filter)}.</strong><span>Clear the filter to see everything.</span>`;
+    }
+    return;
+  }
+
+  if(view==='stack'){
+    $('stack').innerHTML = list.map(i=>{
+      const band=ageBand(i.age);
+      const askable = band!=='fresh';
+      return `<li><article class="card" data-id="${i.id}" data-age="${band}" tabindex="0">
+        <div class="swipebg right">Bought</div>
+        <div class="swipebg left">Dropped</div>
+        <div class="thumb">${ART[i.art]}</div>
+        <div class="body">
+          <div class="title">${i.title}</div>
+          <div>
+            <div class="rowa">
+              <span class="site">${i.site}</span>
+              <span class="price${i.price?'':' none'}">${i.price||'no price'}</span>
+            </div>
+            <div class="meta">
+              <span>${catLabel(i.cat)}</span><span>·</span>
+              <span class="age">${i.age}d</span>
+              ${askable?`<span>·</span><button class="ask" data-ask="${i.id}">still want this?</button>`:''}
+            </div>
+          </div>
+        </div>
+      </article></li>`;
+    }).join('');
+    bindStack();
+  }else{
+    $('board').innerHTML = list.map(i=>`
+      <article class="bcard" data-id="${i.id}" data-age="${ageBand(i.age)}" tabindex="0">
+        <div class="bimg">${ART[i.art]}</div>
+        <div class="bmeta">
+          <div class="btitle">${i.title}</div>
+          <div class="bprice">${i.price||'no price'}</div>
+        </div>
+      </article>`).join('');
+    document.querySelectorAll('.bcard').forEach(c=>{
+      c.onclick=()=>openDetail(+c.dataset.id);
+      c.onkeydown=e=>{if(e.key==='Enter')openDetail(+c.dataset.id)};
+    });
+  }
+}
+
+/* ---------- swipe ---------- */
+function bindStack(){
+  document.querySelectorAll('.card').forEach(card=>{
+    let x0=null, dx=0, dragging=false;
+    const R=card.querySelector('.swipebg.right'), L=card.querySelector('.swipebg.left');
+
+    const start=e=>{
+      if(e.target.closest('.ask')) return;
+      x0=(e.touches?e.touches[0].clientX:e.clientX); dragging=true;
+      card.style.transition='none';
+    };
+    const move=e=>{
+      if(!dragging) return;
+      const x=(e.touches?e.touches[0].clientX:e.clientX);
+      dx=x-x0;
+      card.style.transform=`translateX(${dx}px)`;
+      const p=Math.min(Math.abs(dx)/(card.offsetWidth*0.35),1);
+      R.style.opacity = dx>0?p:0;
+      L.style.opacity = dx<0?p:0;
+    };
+    const end=()=>{
+      if(!dragging) return;
+      dragging=false;
+      card.style.transition='';
+      const th=card.offsetWidth*0.35;
+      if(Math.abs(dx)>th){ commit(+card.dataset.id, dx>0?'bought':'dropped', card); }
+      else { card.style.transform=''; R.style.opacity=0; L.style.opacity=0; }
+      dx=0;
+    };
+
+    card.addEventListener('mousedown',start);
+    window.addEventListener('mousemove',move);
+    window.addEventListener('mouseup',end);
+    card.addEventListener('touchstart',start,{passive:true});
+    card.addEventListener('touchmove',move,{passive:true});
+    card.addEventListener('touchend',end);
+
+    card.addEventListener('click',e=>{
+      if(e.target.closest('.ask')) return;
+      if(Math.abs(dx)>4) return;
+      openDetail(+card.dataset.id);
+    });
+    card.addEventListener('keydown',e=>{ if(e.key==='Enter') openDetail(+card.dataset.id); });
+  });
+
+  document.querySelectorAll('.ask').forEach(b=>{
+    b.onclick=e=>{
+      e.stopPropagation();
+      const id=+b.dataset.ask;
+      const it=ITEMS.find(i=>i.id===id);
+      it.age=0;
+      render();
+      toast('Clock reset. Asking again in 30 days.', null);
+    };
+  });
+}
+
+function commit(id, action, node){
+  const idx=ITEMS.findIndex(i=>i.id===id);
+  const item=ITEMS[idx];
+  lastRemoved={item, idx};
+  if(node){ node.classList.add('committing'); }
+  setTimeout(()=>{
+    ITEMS.splice(idx,1);
+    render();
+    toast(action==='bought'?'Bought. Off the shelf.':'Dropped.', ()=>{
+      ITEMS.splice(lastRemoved.idx,0,lastRemoved.item);
+      render();
+    });
+  }, node?180:0);
+}
+
+/* ---------- detail ---------- */
+let openId=null;
+function openDetail(id){
+  const i=ITEMS.find(x=>x.id===id); if(!i) return;
+  openId=id;
+  $('dHero').innerHTML=ART[i.art];
+  $('dTitle').textContent=i.title;
+  $('dMeta').innerHTML=`<span>${i.site}</span><span>·</span><span>${catLabel(i.cat)}</span><span>·</span><span${i.age>=60?' style="color:var(--signal)"':''}>saved ${i.age}d ago</span>${i.manual?'<span>·</span><span>added by hand</span>':''}`;
+  $('dPrice').textContent=i.price||'No price found';
+  $('dPrice').style.color=i.price?'var(--text)':'var(--text-faint)';
+  $('dNote').textContent=i.note||'No note.';
+  $('dNote').style.color=i.note?'var(--text-dim)':'var(--text-faint)';
+  $('scrim').classList.add('open'); $('sheet').classList.add('open');
+}
+function closeDetail(){ $('scrim').classList.remove('open'); $('sheet').classList.remove('open'); openId=null; }
+$('scrim').onclick=closeDetail;
+document.querySelectorAll('.act').forEach(b=>{
+  b.onclick=()=>{
+    const a=b.dataset.do;
+    if(a==='open'){ toast('Would open the original page.',null); return; }
+    const id=openId; closeDetail();
+    setTimeout(()=>commit(id,a,null),200);
+  };
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeDetail(); backToShelf();} });
+
+/* ---------- toast ---------- */
+let toastTimer=null;
+function toast(msg, undo){
+  clearTimeout(toastTimer);
+  $('toastMsg').textContent=msg;
+  $('toastUndo').style.display = undo?'block':'none';
+  $('toastUndo').onclick=()=>{ if(undo)undo(); $('toast').classList.remove('show'); };
+  $('toast').classList.add('show');
+  toastTimer=setTimeout(()=>$('toast').classList.remove('show'), 6000);
+}
+
+/* ---------- capture flow ---------- */
+function showCapture(){
+  $('app').style.display='none';
+  $('capture').style.display='block';
+  const t=$('capTitle'), th=$('capThumb'), pr=$('capPrice'), pv=$('capPreview');
+  pv.classList.add('assemble-frame');
+  t.textContent='Fetching…'; t.classList.add('loading');
+  th.innerHTML=''; pr.textContent='';
+  $('capNote').value=''; $('capCat').value='Gadgets';
+
+  // metadata resolves progressively — the one orchestrated moment §7.4
+  setTimeout(()=>{
+    t.textContent='Anker 737 GaNPrime 120W charger, three ports';
+    t.classList.remove('loading'); t.classList.add('assemble-title');
+  },520);
+  setTimeout(()=>{ th.innerHTML=ART.software; th.classList.add('assemble-img'); },900);
+  setTimeout(()=>{ pr.textContent='₹9,499'; pr.classList.add('assemble-price'); },1180);
+}
+function backToShelf(){
+  $('capture').style.display='none';
+  $('app').style.display='flex';
+  $('capPreview').className='preview';
+  $('capTitle').className='pv-title loading';
+  $('capThumb').className='thumb';
+  $('capPrice').className='pv-price';
+}
+$('fab').onclick=showCapture;
+$('btnCapture').onclick=()=>{ emptyMode=false; render(); showCapture(); };
+$('capBack').onclick=backToShelf;
+$('capSave').onclick=()=>{
+  const note=$('capNote').value.trim();
+  const cat=$('capCat').value;
+  ITEMS.unshift({
+    id:Date.now(), art:'software',
+    title: $('capTitle').classList.contains('loading')
+      ? 'anker.com' : 'Anker 737 GaNPrime 120W charger, three ports',
+    price: $('capPrice').textContent || '',
+    site:'anker.com', cat: cat==='Software & Tools'?'Software':cat, age:0, note
+  });
+  backToShelf(); emptyMode=false; render();
+  toast('Saved', null);
+};
+
+/* ---------- controls ---------- */
+$('vStack').onclick=()=>{view='stack';$('vStack').ariaPressed='true';$('vBoard').ariaPressed='false';render()};
+$('vBoard').onclick=()=>{view='board';$('vBoard').ariaPressed='true';$('vStack').ariaPressed='false';render()};
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+  document.querySelectorAll('.chip').forEach(x=>x.ariaPressed='false');
+  c.ariaPressed='true'; filter=c.dataset.cat; render();
+});
+$('search').oninput=e=>{query=e.target.value.trim();render()};
+$('btnTheme').onclick=()=>{
+  const dark=document.documentElement.dataset.theme==='dark';
+  document.documentElement.dataset.theme=dark?'light':'dark';
+  $('btnTheme').textContent=dark?'Dark theme':'Light theme';
+};
+$('btnEmpty').onclick=()=>{emptyMode=!emptyMode;$('btnEmpty').ariaPressed=emptyMode;render()};
+$('btnReset').onclick=()=>location.reload();
+
+render();
+</script>
+</body>
+</html>

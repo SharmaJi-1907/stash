@@ -1,0 +1,25 @@
+{
+  "name": "Stash",
+  "short_name": "Stash",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#101620",
+  "theme_color": "#101620",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "share_target": {
+    "action": "https://stash.pages.dev/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [{ "name": "image", "accept": ["image/*"] }]
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "@stash/web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {},
+  "_note": "Dependencies intentionally not installed until P2. See web/README.md for the exact install command."
+}
