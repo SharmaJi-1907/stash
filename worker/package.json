@@ -1,0 +1,27 @@
+{
+  "name": "@stash/worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "migrate:local": "wrangler d1 migrations apply stash-db --local",
+    "migrate:remote": "wrangler d1 migrations apply stash-db --remote",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:fixtures": "vitest run test/fixtures.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.13.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
+    "@cloudflare/workers-types": "^5.20260908.1",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.0",
+    "wrangler": "^4.129.0"
+  }
+}

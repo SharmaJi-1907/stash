@@ -1,0 +1,3 @@
+# Copy to .dev.vars for `wrangler dev --local`. Never commit .dev.vars.
+# Generate with: openssl rand -base64 32 | tr '+/' '-_' | tr -d '='
+DEVICE_TOKEN=

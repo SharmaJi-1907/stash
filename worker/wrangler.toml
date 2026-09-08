@@ -1,0 +1,27 @@
+# Spec: 06-AGENT-BUILD-GUIDE.md §2.3
+# Replace every <...> placeholder with the id printed by the `wrangler ... create`
+# commands in §2.2. Do not commit real secrets here — DEVICE_TOKEN is a Worker secret
+# set with `wrangler secret put DEVICE_TOKEN`.
+
+name = "stash-api"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "stash-db"
+database_id = "494af926-6f76-4794-82f9-998ed1080e63"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "stash-images"
+
+# No KV namespace. Rate-limit counters live in isolate memory instead — see the
+# note at the top of src/middleware/rateLimit.ts for why 02-TRD.md §6's KV-backed
+# counter does not fit the free tier's 1,000 writes/day.
+
+# Daily maintenance: retry failed enrichments, purge tombstones, recompute counters.
+# Spec: 03-ARCHITECTURE.md §9
+[triggers]
+crons = ["0 3 * * *"]
