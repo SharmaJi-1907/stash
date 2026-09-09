@@ -21,10 +21,25 @@
  * only an edge rule could, and that is not free. This limiter protects the
  * database and the object store, which are the meters a loop would actually burn.
  *
- * Isolates are per-location and get recycled, so a count can reset early and two
- * isolates can each allow a full budget. For one user on one device that drift is
- * immaterial, and being approximately right at zero cost beats being exactly
- * right at the cost of the thing being protected.
+ * ── What this actually enforces in production ────────────────────────────────
+ *
+ * Measured against the deployed Worker, sequential writes from one client:
+ * 120 passed, then every subsequent request was refused. 120 is exactly two
+ * budgets, so Cloudflare served that burst from two isolates and each allowed
+ * its own 60. The effective ceiling is therefore 60 x (isolates in play), not
+ * 60 — and under heavier load Cloudflare may use more isolates, raising it
+ * further. Locally, where there is one isolate, it is exactly 60.
+ *
+ * That is a real weakening and is recorded here rather than glossed over. It is
+ * still judged sufficient, because the job is to stop a runaway client loop from
+ * generating unbounded D1 and R2 work, and a few hundred writes per minute is
+ * bounded. The hard backstop is the platform's own: the Workers free plan stops
+ * serving at 100,000 requests/day rather than billing for more.
+ *
+ * If per-token accuracy ever matters — it would take multi-user, or a token
+ * leaking — the fix is Cloudflare's native rate-limiting binding or a Durable
+ * Object. Both are exact and neither touches KV. Both are also Cloudflare-only,
+ * which is why they were not chosen here (02-TRD.md 9.2).
  *
  * It also keeps the Worker portable, which 02-TRD.md §9.2 asks for: there is no
  * Cloudflare-specific API here at all.

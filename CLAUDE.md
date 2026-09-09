@@ -143,6 +143,14 @@ counter lives in isolate memory. Full reasoning at the top of
 `worker/src/middleware/rateLimit.ts`. This also keeps the Worker free of Cloudflare-only
 APIs, which `docs/02-TRD.md` §9.2 asks for.
 
+**Measured, not assumed:** in production the effective write ceiling was 120, not 60 —
+Cloudflare served the burst from two isolates and each allowed its own budget. So the real
+limit is 60 x (isolates in play) and can rise under heavier load. Locally it is exactly 60.
+This is accepted, not overlooked: the job is to bound a runaway loop's D1 and R2 work, and
+the platform's own hard stop is 100,000 requests/day on the free plan. If exactness ever
+matters, the fix is the native rate-limiting binding or a Durable Object — both exact, both
+Cloudflare-only.
+
 **`image_bytes` on the items table** (P1, not yet built). Not in `docs/02-TRD.md` §4. It
 carries the stored size of each item's image so the daily cron can total live storage
 exactly and subtract correctly when tombstones are purged — a single running counter
