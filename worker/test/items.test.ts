@@ -15,8 +15,15 @@ const del = (id: string) =>
 
 const uuid = () => crypto.randomUUID();
 
-/** Wait for background work (ctx.waitUntil) to land, or give up. */
-async function waitFor<T>(check: () => Promise<T | null>, timeoutMs = 3000): Promise<T> {
+/**
+ * Wait for background work (ctx.waitUntil) to land, or give up.
+ *
+ * The budget is generous on purpose. This failed once in eleven runs, and only
+ * when three typecheck processes happened to be running alongside — a loaded
+ * machine, not a broken assertion. A test that fails on load is a test that
+ * gets ignored, and an ignored test protects nothing.
+ */
+async function waitFor<T>(check: () => Promise<T | null>, timeoutMs = 15_000): Promise<T> {
   const until = Date.now() + timeoutMs;
   for (;;) {
     const value = await check();
