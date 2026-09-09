@@ -1,0 +1,331 @@
+{
+  "_comment": "The twenty-link enrichment fixture set. Spec: 02-TRD.md §10, 01-PRD.md F2 acceptance. Written BEFORE the extractors, per 06-AGENT-BUILD-GUIDE.md §1.11 — a set written afterwards bends toward whatever was built. At least 16 of 20 must reach `rich` or `partial` without manual input. Re-run whenever the extraction ladder is touched: npm run test:fixtures",
+  "_expect": {
+    "rich": "title, image, and a price",
+    "partial": "usable, but something is missing",
+    "failed": "nothing usable — item still saves, offers manual capture"
+  },
+  "links": [
+    {
+      "id": "amazon-in",
+      "kind": "marketplace",
+      "url": "https://www.amazon.com/dp/B0DZ6ZV9B3?tag=techfusion98-20",
+      "want": "rich",
+      "note": "Supplied by the user. Carries an affiliate `tag` parameter, which canonicalisation must strip. Bot wall likely on server fetch — the extension path must carry this one.",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": false,
+        "ogImg": false,
+        "tw": false,
+        "title": true,
+        "price": false
+      }
+    },
+    {
+      "id": "flipkart",
+      "kind": "marketplace",
+      "url": "https://www.flipkart.com/apple-iphone-15-black-128-gb/p/itmf2c0aa4f9d1c3",
+      "want": "rich",
+      "note": "pid parameter is the canonical key",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": false,
+        "ogImg": false,
+        "tw": false,
+        "title": true,
+        "price": false
+      }
+    },
+    {
+      "id": "myntra",
+      "kind": "fashion",
+      "url": "https://www.myntra.com/tshirts/roadster/roadster-men-black-solid-round-neck-t-shirt/1700944/buy",
+      "want": "partial",
+      "note": "numeric product id segment is canonical",
+      "baseline": {
+        "status": 200,
+        "jsonld": true,
+        "og": true,
+        "ogImg": true,
+        "tw": true,
+        "title": true,
+        "price": true
+      }
+    },
+    {
+      "id": "ajio",
+      "kind": "fashion",
+      "url": "https://www.ajio.com/bose-wireless-2nd-gen-ultra-bluetooth-headphone-qc-ultra/p/4948119920_multi?",
+      "want": "partial",
+      "note": "Supplied by the user. Trailing bare `?` with no query — canonicalisation must not leave it.",
+      "baseline": {
+        "status": 403,
+        "jsonld": false,
+        "og": false,
+        "ogImg": false,
+        "tw": false,
+        "title": true,
+        "price": false
+      }
+    },
+    {
+      "id": "shopify",
+      "kind": "shopify",
+      "url": "https://www.keychron.com/products/keychron-k2-pro-qmk-via-wireless-mechanical-keyboard",
+      "want": "rich",
+      "note": "Shopify emits clean JSON-LD Product. The doc's own worked example.",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": true,
+        "ogImg": true,
+        "tw": true,
+        "title": true,
+        "price": true
+      }
+    },
+    {
+      "id": "shopify-2",
+      "kind": "shopify",
+      "url": "https://www.allbirds.com/products/mens-wool-runners",
+      "want": "rich",
+      "note": "second Shopify store, different theme",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": true,
+        "ogImg": true,
+        "tw": true,
+        "title": true,
+        "price": true
+      }
+    },
+    {
+      "id": "woocommerce",
+      "kind": "woocommerce",
+      "url": "https://woocommerce.com/products/woocommerce-subscriptions/",
+      "want": "partial",
+      "note": "",
+      "baseline": {
+        "status": 200,
+        "jsonld": true,
+        "og": true,
+        "ogImg": true,
+        "tw": false,
+        "title": true,
+        "price": true
+      }
+    },
+    {
+      "id": "wordpress-blog",
+      "kind": "blog",
+      "url": "https://blog.cloudflare.com/introducing-htmlrewriter/",
+      "want": "partial",
+      "note": "no price — partial is the correct outcome, not a failure",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": true,
+        "ogImg": true,
+        "tw": true,
+        "title": true,
+        "price": false
+      }
+    },
+    {
+      "id": "youtube",
+      "kind": "video",
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "want": "partial",
+      "note": "oEmbed endpoint is unauthenticated and reliable",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": false,
+        "ogImg": false,
+        "tw": false,
+        "title": false,
+        "price": false
+      }
+    },
+    {
+      "id": "youtube-short",
+      "kind": "video",
+      "url": "https://youtu.be/dQw4w9WgXcQ",
+      "want": "partial",
+      "note": "must canonicalise to the same url_hash as youtube above",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": false,
+        "ogImg": false,
+        "tw": false,
+        "title": false,
+        "price": false
+      }
+    },
+    {
+      "id": "github",
+      "kind": "software",
+      "url": "https://github.com/honojs/hono",
+      "want": "partial",
+      "note": "Software & Tools must not look broken. 01-PRD F3.4",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": true,
+        "ogImg": true,
+        "tw": true,
+        "title": true,
+        "price": false
+      }
+    },
+    {
+      "id": "github-2",
+      "kind": "software",
+      "url": "https://github.com/cloudflare/workers-sdk",
+      "want": "partial",
+      "note": "",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": true,
+        "ogImg": true,
+        "tw": true,
+        "title": true,
+        "price": false
+      }
+    },
+    {
+      "id": "saas-pricing",
+      "kind": "software",
+      "url": "https://www.cloudflare.com/plans/",
+      "want": "partial",
+      "note": "a pricing page is a legitimate save",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": true,
+        "ogImg": true,
+        "tw": true,
+        "title": true,
+        "price": false
+      }
+    },
+    {
+      "id": "saas-pricing-2",
+      "kind": "software",
+      "url": "https://linear.app/pricing",
+      "want": "partial",
+      "note": "",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": true,
+        "ogImg": true,
+        "tw": true,
+        "title": true,
+        "price": false
+      }
+    },
+    {
+      "id": "news",
+      "kind": "article",
+      "url": "https://www.bbc.com/news/technology",
+      "want": "partial",
+      "note": "",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": true,
+        "ogImg": false,
+        "tw": true,
+        "title": true,
+        "price": false
+      }
+    },
+    {
+      "id": "reddit",
+      "kind": "social",
+      "url": "https://www.reddit.com/r/MechanicalKeyboards/",
+      "want": "partial",
+      "note": "",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": false,
+        "ogImg": false,
+        "tw": false,
+        "title": true,
+        "price": false
+      }
+    },
+    {
+      "id": "instagram",
+      "kind": "social",
+      "url": "https://www.instagram.com/p/C1000000000/",
+      "want": "failed",
+      "note": "Login wall. Expected to fail — this one proves the manual fallback path exists. 01-PRD F4",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": false,
+        "ogImg": false,
+        "tw": false,
+        "title": true,
+        "price": false
+      }
+    },
+    {
+      "id": "wikipedia",
+      "kind": "longtail",
+      "url": "https://en.wikipedia.org/wiki/Mechanical_keyboard",
+      "want": "partial",
+      "note": "",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": true,
+        "ogImg": true,
+        "tw": false,
+        "title": true,
+        "price": false
+      }
+    },
+    {
+      "id": "crowdsupply",
+      "kind": "longtail",
+      "url": "https://www.crowdsupply.com/upside-down-labs/neuro-playground-lite#products",
+      "want": "partial",
+      "note": "Supplied by the user. Long-tail hardware store with a `#products` fragment, which canonicalisation must strip (it is not a hashbang route).",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": true,
+        "ogImg": true,
+        "tw": false,
+        "title": true,
+        "price": false
+      }
+    },
+    {
+      "id": "docs-site",
+      "kind": "longtail",
+      "url": "https://developers.cloudflare.com/r2/",
+      "want": "partial",
+      "note": "",
+      "baseline": {
+        "status": 200,
+        "jsonld": false,
+        "og": true,
+        "ogImg": true,
+        "tw": false,
+        "title": true,
+        "price": false
+      }
+    }
+  ],
+  "_baseline_note": "Measured 2026-09-09 by fetching every URL server-side with a browser user agent, BEFORE any extractor existed. This is what a plain server fetch sees on its own, and it is the number the ladder has to beat. Three results confirm the architecture rather than contradicting it:\n  * Every large marketplace bot-walls a server fetch. amazon.com returns 200 with the title 'Amazon.com' and no metadata at all, flipkart.com returns a page titled 'Flipkart reCAPTCHA', and ajio.com returns 403 'Access Denied'. myntra.com is the exception and serves full JSON-LD with a price. This is 01-PRD.md R2 exactly, and it is why the extension is the high-fidelity path and the server fetch the fallback (03-ARCHITECTURE.md 3).\n  * youtube.com returns no usable HTML, but its oEmbed endpoint returns title, author and thumbnail. Tier 4 is not optional for video links.\n  * Open Graph carries most of the long tail: 13 of 20 URLs expose og:title with no work at all."
+}
