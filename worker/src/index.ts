@@ -18,6 +18,8 @@ import { Hono } from 'hono';
 import type { Env } from './env';
 import { auth } from './middleware/auth';
 import { rateLimit } from './middleware/rateLimit';
+import { items } from './routes/items';
+import { images } from './routes/images';
 import type { ApiError, ErrorCode, HealthResponse } from '../../shared/types';
 
 type App = { Bindings: Env };
@@ -28,6 +30,10 @@ const app = new Hono<App>();
 function apiError(code: ErrorCode, message: string): ApiError {
   return { error: { code, message } };
 }
+
+// Images are served outside /v1 and outside auth: an <img> tag cannot send an
+// Authorization header. See the note at the top of routes/images.ts.
+app.route('/img', images);
 
 app.get('/health', (c) => {
   const body: HealthResponse = { ok: true, time: Date.now() };
@@ -42,7 +48,9 @@ const v1 = new Hono<App>();
 v1.use('*', auth);
 v1.use('*', rateLimit);
 
-// P1 adds items and enrichment here; P2 adds sync, uploads and images.
+v1.route('/items', items);
+
+// P2 adds sync, uploads and images.
 
 app.route('/v1', v1);
 
