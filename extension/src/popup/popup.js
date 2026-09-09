@@ -9,7 +9,7 @@
  * behaviour in the product — 01-PRD.md principle 1.
  */
 
-import { saveItem, NotConfigured } from '../shared.js';
+import { saveItem, NotConfigured, ensureScraper } from '../shared.js';
 
 /** @param {string} id @returns {HTMLElement} */
 const $ = (id) => /** @type {HTMLElement} */ (document.getElementById(id));
@@ -46,8 +46,13 @@ async function init() {
 
   // Fill in behind the user. If this never arrives, Save still works.
   try {
-    const reply = await chrome.tabs.sendMessage(tab.id, { type: 'stash:scrape' });
-    if (reply?.ok) {
+    const reply = await ensureScraper(tab.id);
+    if (!reply) {
+      // Say so. A blank line here looks identical to a page with no metadata,
+      // and that ambiguity cost a debugging round already.
+      $('price').textContent = 'Could not read this page. Saving the link only.';
+    }
+    if (reply) {
       scraped = reply.scraped;
       if (!$input('title').value && scraped.title) $input('title').value = scraped.title;
       if (scraped.priceText) {
@@ -67,8 +72,8 @@ async function init() {
           : 'No price found on this page.';
       }
     }
-  } catch {
-    // No content script here. The server ladder will try instead.
+  } catch (e) {
+    $('price').textContent = 'Could not read this page. Saving the link only.';
   }
 }
 

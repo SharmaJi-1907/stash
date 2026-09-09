@@ -9,7 +9,7 @@
  * the server's ladder takes over. A save is never blocked on the scrape.
  */
 
-import { saveItem, NotConfigured } from './shared.js';
+import { saveItem, NotConfigured, ensureScraper } from './shared.js';
 
 /** @type {chrome.contextMenus.CreateProperties[]} */
 const MENUS = [
@@ -24,15 +24,10 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-/** Ask the tab what it can see. Returns null if the script cannot run there. */
+/** Ask the tab what it can see, injecting the scraper if it is not there yet. */
 async function scrapeTab(tabId) {
-  try {
-    const reply = await chrome.tabs.sendMessage(tabId, { type: 'stash:scrape' });
-    return reply?.ok ? reply.scraped : null;
-  } catch {
-    // No content script in this tab. Not an error — the server ladder handles it.
-    return null;
-  }
+  const result = await ensureScraper(tabId);
+  return result?.scraped ?? null;
 }
 
 async function notify(tabId, text, ok = true) {

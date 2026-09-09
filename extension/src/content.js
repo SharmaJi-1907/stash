@@ -227,6 +227,15 @@ function diagnose() {
   };
 }
 
+// This file is both declared in the manifest and injected on demand by
+// ensureScraper(). Injecting twice would register two listeners and answer every
+// message twice, so the second run stops here.
+const marker = /** @type {{ __stashScraperLoaded?: boolean }} */ (
+  /** @type {unknown} */ (window)
+);
+if (!marker.__stashScraperLoaded) {
+  marker.__stashScraperLoaded = true;
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type !== 'stash:scrape') return false;
   try {
@@ -238,3 +247,5 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
   return true;
 });
+
+}

@@ -69,3 +69,38 @@ export async function saveItem({ url, note, title, scraped, source = 'extension'
 
   return response.json();
 }
+
+/**
+ * Ask a tab for its scrape, injecting the content script first if it is not there.
+ *
+ * A content script only enters a page when that page loads. After the extension
+ * is reloaded — or installed — every tab already open has none, and
+ * chrome.tabs.sendMessage fails with "Could not establish connection". The
+ * symptom is a popup with an empty title and no price, which looks exactly like
+ * a page that has no metadata, so the real cause is easy to miss.
+ *
+ * Injecting on demand removes the whole class of problem: no page reload, no
+ * instruction to remember.
+ *
+ * @param {number} tabId
+ * @returns {Promise<{ scraped?: object, diagnostics?: object, injected: boolean } | null>}
+ */
+export async function ensureScraper(tabId) {
+  try {
+    const reply = await chrome.tabs.sendMessage(tabId, { type: 'stash:scrape' });
+    if (reply?.ok) return { scraped: reply.scraped, diagnostics: reply.diagnostics, injected: false };
+  } catch {
+    // No listener yet. Fall through and put one there.
+  }
+
+  try {
+    await chrome.scripting.executeScript({ target: { tabId }, files: ['src/content.js'] });
+    const reply = await chrome.tabs.sendMessage(tabId, { type: 'stash:scrape' });
+    if (reply?.ok) return { scraped: reply.scraped, diagnostics: reply.diagnostics, injected: true };
+  } catch {
+    // Chrome refuses injection on its own pages, the Web Store, and PDFs. The
+    // save still goes ahead without a scrape.
+  }
+
+  return null;
+}
