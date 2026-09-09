@@ -59,3 +59,26 @@ before or after the Worker runs.
 take no body, so they will hit this while being tested locally. Send `{}` as the body when
 testing them by hand, or expect the occasional spurious 500 that does not appear in
 production, where no dev proxy exists. Do not "fix" the Worker for this.
+
+## A known audit finding, left in place deliberately
+
+`npm audit` reports 4 high-severity advisories, all the same one:
+
+```
+sharp <0.35.4 — vulnerabilities in libheif (GHSA-g89c-p67h-r497, GHSA-2jg2-4ch7-h545)
+node_modules/sharp
+  via miniflare -> @cloudflare/vitest-pool-workers, wrangler
+```
+
+**It does not reach production.** `sharp` is a native image library that miniflare
+uses to emulate Cloudflare's image resizing locally. The Worker's only runtime
+dependency is `hono`; nothing else is bundled or deployed. The advisory is in
+libheif's HEIF decoding, and nothing here decodes a HEIF image — images are
+streamed into R2 as bytes and never processed (`03-ARCHITECTURE.md` §4.5).
+
+**The offered fix makes things worse.** `npm audit fix --force` downgrades
+`@cloudflare/vitest-pool-workers` to 0.8.30, which predates the Vitest 4 API this
+project's test setup is built on. Trading a working test suite for a dev-only
+advisory that cannot be triggered is the wrong way round.
+
+Re-check when Cloudflare ships a miniflare release carrying `sharp` ≥ 0.35.4.

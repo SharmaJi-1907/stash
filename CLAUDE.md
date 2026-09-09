@@ -91,6 +91,14 @@ live DOM of a page the user is already logged into, which defeats bot walls a se
 fetch cannot get past. When it supplies `scraped` data the server skips its extraction
 ladder entirely. See `docs/03-ARCHITECTURE.md` §3.
 
+**Measured on the deployed Worker, 2026-09-09: server-side enrichment yields 17/20 usable
+titles and images, and 0/20 prices.** Run locally the same set gives 19/20 and one price —
+because `wrangler dev` fetches from a home connection while the Worker fetches from a
+Cloudflare datacentre address. flipkart.com, ajio.com and myntra.com all refuse the edge;
+myntra.com serves a full Product JSON-LD with a price to a home connection and nothing at
+all to Cloudflare. So every local enrichment measurement flatters production, and the
+extension is not an optimisation — it is the only path to a price.
+
 ## Layout
 
 ```
