@@ -143,6 +143,22 @@ counter lives in isolate memory. Full reasoning at the top of
 `worker/src/middleware/rateLimit.ts`. This also keeps the Worker free of Cloudflare-only
 APIs, which `docs/02-TRD.md` §9.2 asks for.
 
+**`image_bytes` on the items table** (P1, not yet built). Not in `docs/02-TRD.md` §4. It
+carries the stored size of each item's image so the daily cron can total live storage
+exactly and subtract correctly when tombstones are purged — a single running counter
+cannot, because a purge would not know how much to subtract. The size is already measured
+when enforcing the 2 MB cap, so recording it costs nothing.
+
+It feeds a storage line on the shelf-health indicator (`docs/01-PRD.md` F11.4), which the
+cron in `docs/03-ARCHITECTURE.md` §9 already recomputes into `settings`:
+
+    Shelf health    47 items open  ·  0.3 GB / 10 GB
+
+The user asked for this because R2 now has a card attached, and Cloudflare's billing alert
+arrives as an email that gets lost among daily mail. An indicator in the app is seen every
+time the shelf is opened. Add the column and the byte accounting in the same commit as the
+image upload in P1 — there is nothing to record before then.
+
 **`worker/src/env.ts`, not `env.d.ts`.** `Env` is imported by every route and middleware,
 so it is a normal module rather than an ambient declaration.
 
