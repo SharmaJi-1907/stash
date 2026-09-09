@@ -1,0 +1,14 @@
+{
+  "name": "@stash/extension",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "_note": "No build step. Load this folder unpacked. typecheck runs tsc over the plain JS with checkJs, so shared/types.ts still constrains what crosses the wire.",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.300",
+    "typescript": "^5.9.0"
+  }
+}

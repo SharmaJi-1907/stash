@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="../tokens.css">
+  <style>
+    body { width: 320px; padding: var(--s4); }
+    h1 { font-size: 15px; font-weight: 600; margin: 0 0 var(--s3); }
+    .site { font-size: 13px; color: var(--text-dim); margin-bottom: var(--s4);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .field { margin-bottom: var(--s3); }
+    .price { color: var(--text); font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body>
+  <h1>Save</h1>
+  <div class="site" id="site">reading the page…</div>
+
+  <div class="field">
+    <label for="title">Title</label>
+    <input id="title" type="text" autocomplete="off">
+  </div>
+
+  <div class="field">
+    <label for="note">Add a note</label>
+    <textarea id="note" rows="2" autocomplete="off"></textarea>
+  </div>
+
+  <div class="field muted" id="price"></div>
+
+  <button id="save">Save</button>
+  <div class="status" id="status"></div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

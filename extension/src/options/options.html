@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Stash — settings</title>
+  <link rel="stylesheet" href="../tokens.css">
+  <style>
+    body { max-width: 520px; margin: 0 auto; padding: var(--s5) var(--s4); }
+    h1 { font-size: 20px; font-weight: 600; margin: 0 0 var(--s2); }
+    .field { margin-bottom: var(--s4); }
+    code { background: var(--surface-raised); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>Stash</h1>
+  <p class="muted">
+    These stay on this computer, in the extension's own storage. Nothing is
+    compiled into the extension.
+  </p>
+
+  <div class="field">
+    <label for="apiBase">API address</label>
+    <input id="apiBase" type="url" placeholder="https://stash-api.<you>.workers.dev/v1" spellcheck="false">
+    <p class="muted">Ends with <code>/v1</code>.</p>
+  </div>
+
+  <div class="field">
+    <label for="deviceToken">Device token</label>
+    <input id="deviceToken" type="password" autocomplete="off" spellcheck="false">
+    <p class="muted">The one you set with <code>wrangler secret put DEVICE_TOKEN</code>.</p>
+  </div>
+
+  <button id="save">Save and test</button>
+  <div class="status" id="status"></div>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>

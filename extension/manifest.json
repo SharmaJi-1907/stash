@@ -3,8 +3,15 @@
   "name": "Stash",
   "version": "1.0.0",
   "description": "Save the current page to your Stash shelf.",
-  "permissions": ["activeTab", "contextMenus", "scripting", "storage"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "background": {
     "service_worker": "src/background.js",
     "type": "module"
@@ -16,7 +23,9 @@
   "options_page": "src/options/options.html",
   "commands": {
     "stash-page": {
-      "suggested_key": { "default": "Ctrl+Shift+S" },
+      "suggested_key": {
+        "default": "Ctrl+Shift+S"
+      },
       "description": "Save the current page to Stash"
     }
   },
@@ -25,5 +34,18 @@
       "id": "stash@localhost",
       "strict_min_version": "121.0"
     }
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "src/content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
 }
