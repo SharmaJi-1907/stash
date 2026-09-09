@@ -225,11 +225,22 @@ The user directs and decides; they do not read code. This shapes how work is don
 
 ## Git workflow
 
+**Push and merge are the user's, never yours.** Do not run `git push` or `git merge` — not
+even when the user has approved the work being pushed. Give them the exact command to
+copy, say what output means success, and stop there.
+
+**Announce every commit before making it.** Say which files go in and what the message
+will be, and wait. The user has asked to be told first; a commit is not a routine step
+here.
+
 One branch per phase, named `P<n>/<two-or-three-word-description>`, with several small
-commits inside it. The phase branch merges into `main` only when the phase is complete, so
-`main` always holds working, finished phases.
+commits inside it. Each new phase branch is cut from the previous phase branch, not from
+`main` — the user asked for this explicitly. `main` is moved to the phase branch once the
+phase is complete.
 
 `.gitignore` is committed first, before anything else — a secret committed once stays in
 history forever, and deleting the file later does not remove it.
+
+Run `npm run check:secrets` before handing over a push command, and say that it passed.
 
 Commit messages carry no `Co-Authored-By` trailer, by the user's instruction.
