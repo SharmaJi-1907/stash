@@ -97,6 +97,10 @@ export interface Item {
   imageUrl: string | null;
   imageWidth: number | null;
   imageHeight: number | null;
+  /** Bytes stored in R2. Summed by the daily cron into the shelf-health line so
+   *  storage use is visible in the app rather than only in a billing email.
+   *  Not in 02-TRD.md §4 — see CLAUDE.md "Deviations from the documents". */
+  imageBytes: number | null;
 
   priceAmount: MinorUnits | null;
   priceCurrency: CurrencyCode | null;
@@ -219,6 +223,16 @@ export interface ScrapedMetadata {
   image?: string;
   priceAmount?: MinorUnits;
   priceCurrency?: CurrencyCode;
+  /**
+   * The price exactly as it appeared on the page — "₹8,999.00", "Rs. 8999".
+   *
+   * The extension sends this rather than a parsed number so that price parsing
+   * happens in one place, against one set of tests. A second implementation in
+   * the extension would be a second thing to get wrong, and getting it wrong
+   * means a confidently incorrect number on the shelf, which 03-ARCHITECTURE.md
+   * §4.4 rule 5 exists to prevent.
+   */
+  priceText?: string;
   siteName?: string;
 }
 
