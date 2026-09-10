@@ -1,0 +1,113 @@
+/* Spec: 04-DESIGN-SYSTEM.md §5, §6, §7.1. Values come from tokens.css only. */
+
+.proof { display: flex; flex-direction: column; gap: var(--s6); max-width: 680px; }
+
+.proof__h {
+  margin: 0 0 var(--s2);
+  font-size: var(--t-md);
+  line-height: var(--t-md-lh);
+  font-weight: var(--t-md-w);
+}
+
+.proof__note {
+  margin: 0 0 var(--s3);
+  max-width: 68ch;           /* §4.2: measure caps at 68 characters */
+  font-size: var(--t-sm);
+  line-height: var(--t-sm-lh);
+  color: var(--text-dim);
+}
+
+.proof__row { display: flex; flex-wrap: wrap; gap: var(--s3); }
+
+.swatch { display: flex; flex-direction: column; gap: var(--s1); }
+.swatch__chip {
+  width: 88px; height: 56px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+}
+.swatch__name { font-size: var(--t-xs); color: var(--text-faint); }
+
+.type-row {
+  display: flex; align-items: baseline; gap: var(--s4);
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--line);
+}
+.type-row:last-child { border-bottom: 0; }
+.type-row__sample { flex: 1; min-width: 0; }
+.type-row__label { font-size: var(--t-xs); color: var(--text-faint); text-align: right; max-width: 40%; }
+
+/* ── The shelf card (§7.1) ─────────────────────────────────────────────────── */
+
+.proof__cards { display: flex; flex-direction: column; }
+
+.card {
+  position: relative;
+  display: flex;
+  gap: var(--s3);
+  height: var(--card-height);
+  padding: var(--s3);
+  background: var(--surface);
+  border-radius: var(--r-card);
+  /* A separator hairline, not a border: §7.1 says no border except this. */
+  border-bottom: 1px solid var(--line);
+  transition: background var(--press) var(--ease);
+}
+.card:active { background: var(--surface-lit); }
+
+/* §6: the left rule appears on no other element in the product, so its meaning
+   is unambiguous the moment it is seen twice. */
+.card--stale::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--stale-rule);
+  background: var(--signal);
+  border-radius: var(--r-card) 0 0 var(--r-card);
+}
+
+.card__image {
+  flex: 0 0 var(--card-image);
+  width: var(--card-image);
+  height: var(--card-image);
+  /* Concentric with the card's outer curve: card radius minus its padding. */
+  border-radius: calc(var(--r-card) - 2px);
+  background: var(--surface-raised);
+  object-fit: cover;
+}
+/* The opacity taper is the second signal — stale items literally recede. */
+.card--stale .card__image { opacity: 0.88; }
+.card--overdue .card__image { opacity: 0.75; }
+
+.card__body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.card__title {
+  margin: 0;
+  font-size: var(--t-md);
+  line-height: var(--t-md-lh);
+  font-weight: var(--t-md-w);
+  color: var(--text);
+  /* Two lines, never three. Three destroys the rhythm of the list, and two is
+     enough to identify anything (§4.3.3). */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.card__meta {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s3);
+  font-size: var(--t-sm);
+  line-height: var(--t-sm-lh);
+}
+/* Prices right-align within their own column so a list of them forms a
+   scannable edge (§5.5). */
+.card__price { order: 2; color: var(--text); font-variant-numeric: tabular-nums; }
+.card__site { order: 1; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.card__age { font-size: var(--t-sm); line-height: var(--t-sm-lh); color: var(--text-faint); }
+.card__age--overdue { color: var(--signal); }

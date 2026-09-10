@@ -1,0 +1,72 @@
+/* Spec: 04-DESIGN-SYSTEM.md §3, §4, §5. Values from tokens.css only. */
+
+.settings { display: flex; flex-direction: column; gap: var(--s6); max-width: 480px; }
+
+.settings__section { display: flex; flex-direction: column; gap: var(--s3); }
+
+.settings__h {
+  margin: 0;
+  font-size: var(--t-md);
+  line-height: var(--t-md-lh);
+  font-weight: var(--t-md-w);
+}
+
+.settings__note { margin: 0; font-size: var(--t-sm); color: var(--text-dim); max-width: 68ch; }
+.settings__hint { font-size: var(--t-xs); color: var(--text-faint); }
+
+.settings__field { display: flex; flex-direction: column; gap: var(--s1); }
+.settings__label { font-size: var(--t-sm); color: var(--text-dim); }
+
+.settings input {
+  width: 100%;
+  min-height: var(--touch-min);
+  padding: var(--s2) var(--s3);
+  font: inherit;
+  font-size: var(--t-base);
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+}
+
+.settings__button {
+  min-height: var(--touch-min);
+  padding: var(--s2) var(--s4);
+  font: inherit;
+  font-size: var(--t-md);
+  font-weight: var(--t-md-w);
+  color: var(--bg);
+  background: var(--text);
+  border: 0;
+  border-radius: var(--r-input);
+  cursor: pointer;
+  align-self: flex-start;
+}
+.settings__button--quiet {
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+}
+
+.settings__result { margin: 0; font-size: var(--t-sm); }
+.settings__result--ok { color: var(--settled); }
+.settings__result--bad { color: var(--drop); }
+
+.settings__choices { display: flex; gap: var(--s2); flex-wrap: wrap; }
+.settings__choice {
+  min-height: var(--touch-min);
+  padding: 0 var(--s3);
+  font: inherit;
+  font-size: var(--t-sm);
+  color: var(--text-dim);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  text-transform: capitalize;
+}
+.settings__choice.is-on {
+  color: var(--text);
+  background: var(--surface-lit);
+  border-color: var(--line-strong);
+}
