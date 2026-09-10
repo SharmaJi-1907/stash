@@ -1,0 +1,81 @@
+/**
+ * Layout that is not a component: the app frame, and the few shapes every
+ * screen shares.
+ *
+ * Spec: 04-DESIGN-SYSTEM.md §5
+ *
+ * Everything reads from tokens.css. No colour, size or spacing is written here
+ * as a literal — 06-AGENT-BUILD-GUIDE.md §1.5.
+ */
+
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  /* The shelf is used one-handed on a phone; keep content clear of the notch
+     and the gesture bar. */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: var(--s4);
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.topbar h1 {
+  margin: 0;
+  font-size: var(--t-display);
+  line-height: var(--t-display-lh);
+  font-weight: var(--t-display-w);
+  letter-spacing: var(--tracking-tight);
+}
+
+.main { flex: 1; padding: var(--s4); }
+
+/* Left-aligned throughout. Only empty states are centred, because there is
+   nothing to align to (§5.5). */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--s3);
+  min-height: 50dvh;
+  color: var(--text-dim);
+}
+.empty strong { color: var(--text); font-weight: var(--t-md-w); }
+
+/* An icon button that still meets the 44px touch target (§9) without looking
+   44px tall. */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  padding: var(--s2);
+  font: inherit;
+  font-size: var(--t-sm);
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  cursor: pointer;
+  transition: background var(--press) var(--ease), color var(--press) var(--ease);
+}
+.icon-button:hover { color: var(--text); }
+.icon-button:active { background: var(--surface-lit); }
+
+.topbar__nav { display: flex; gap: var(--s2); align-items: center; }
+/* An anchor styled as a button still has to look like the button beside it. */
+a.icon-button { text-decoration: none; }
