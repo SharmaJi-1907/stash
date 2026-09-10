@@ -1,0 +1,33 @@
+/* 04-DESIGN-SYSTEM.md §3.1 and §4 — enough of it to look like the product. */
+:root {
+  --bg: #101620; --surface: #161E2B; --surface-raised: #1E2836;
+  --line: #2B3746; --text: #E9EBF0; --text-dim: #97A3B6; --text-faint: #626F82;
+  --signal: #E8B84B; --settled: #5DA096; --drop: #C4736B;
+  --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 40px;
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: var(--s5) var(--s4);
+  font-family: var(--font); font-size: 15px; line-height: 1.55;
+  background: var(--bg); color: var(--text);
+  max-width: 640px; margin-inline: auto;
+}
+h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.011em; margin: 0 0 var(--s2); }
+h2 { font-size: 16px; font-weight: 600; margin: var(--s6) 0 var(--s3); }
+p { margin: 0 0 var(--s3); color: var(--text-dim); }
+code { background: var(--surface-raised); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+.card {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: var(--s4); margin-bottom: var(--s3);
+}
+.row { display: flex; gap: var(--s3); padding: 6px 0; border-bottom: 1px solid var(--line); }
+.row:last-child { border-bottom: 0; }
+.key { color: var(--text-faint); font-size: 13px; min-width: 96px; }
+.val { color: var(--text); word-break: break-all; flex: 1; font-size: 14px; }
+.val.empty { color: var(--text-faint); font-style: italic; }
+.ok { color: var(--settled); font-weight: 500; }
+.bad { color: var(--drop); font-weight: 500; }
+.hint { color: var(--signal); }
+ol { color: var(--text-dim); padding-left: 20px; }
+li { margin-bottom: var(--s2); }

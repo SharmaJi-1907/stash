@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101620">
+  <title>Stash — what arrived</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <h1>What arrived</h1>
+  <p id="lede">Reading…</p>
+  <div id="out"></div>
+  <p><a href="/" style="color: var(--signal)">Back</a></p>
+
+  <script>
+    const DB = 'stash-share-check', STORE = 'shares';
+
+    function openDb() {
+      return new Promise((resolve, reject) => {
+        const rq = indexedDB.open(DB, 1);
+        rq.onupgradeneeded = () => rq.result.createObjectStore(STORE, { keyPath: 'receivedAt' });
+        rq.onsuccess = () => resolve(rq.result);
+        rq.onerror = () => reject(rq.error);
+      });
+    }
+
+    async function all() {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const rq = db.transaction(STORE, 'readonly').objectStore(STORE).getAll();
+        rq.onsuccess = () => resolve(rq.result);
+        rq.onerror = () => reject(rq.error);
+      });
+    }
+
+    /** The URL can arrive in `url` or buried in `text`, depending on the app. */
+    function urlIn(record) {
+      if (record.url) return record.url;
+      const match = (record.text || '').match(/https?:\/\/\S+/);
+      return match ? match[0] : '';
+    }
+
+    const row = (key, value) =>
+      `<div class="row"><span class="key">${key}</span>` +
+      `<span class="val${value ? '' : ' empty'}">${value ? String(value).replace(/[<>&]/g, '') : '(empty)'}</span></div>`;
+
+    all().then((records) => {
+      const out = document.getElementById('out');
+      const lede = document.getElementById('lede');
+
+      if (!records.length) {
+        lede.textContent = 'Nothing shared here yet. Share something to Stash from another app.';
+        return;
+      }
+
+      records.sort((a, b) => b.receivedAt - a.receivedAt);
+      const newest = records[0];
+      const found = urlIn(newest);
+
+      lede.innerHTML = found
+        ? '<span class="ok">The share arrived and carried a URL.</span> That is the whole assumption confirmed.'
+        : '<span class="bad">A share arrived, but no URL was in it.</span> The fields below show what came.';
+
+      out.innerHTML = records.map((r) => `
+        <div class="card">
+          ${row('received', new Date(r.receivedAt).toLocaleString())}
+          ${row('url field', r.url)}
+          ${row('text field', r.text)}
+          ${row('title field', r.title)}
+          ${row('URL found', urlIn(r))}
+          ${row('image', r.imageName ? r.imageName + ' — ' + r.imageType + ', ' + r.imageSize + ' bytes' : '')}
+          ${r.error ? row('error', r.error) : ''}
+        </div>`).join('');
+    }).catch((e) => {
+      document.getElementById('lede').innerHTML =
+        '<span class="bad">Could not read what arrived: ' + e.message + '</span>';
+    });
+
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# Every app path is served by index.html — /share, /add, /settings, /item/<id>
+# are React routes, not files.
+#
+# Status 200 is a rewrite, not a redirect, and that distinction is the whole
+# reason this file is one line. An earlier version of this project mapped
+# /share to /share.html with a 200; Cloudflare Pages already redirects the .html
+# form back to the clean one, and the two cancelled into "308 location: /share"
+# — an endless loop on the exact path the Android share target posts to. On a
+# phone that is indistinguishable from the share target not working at all.
+/*  /index.html  200

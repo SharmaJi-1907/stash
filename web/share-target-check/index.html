@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101620">
+  <title>Stash — share target check</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <h1>Stash</h1>
+  <p>
+    This page exists to answer one question: does Android put Stash in the share
+    sheet, and does what you share arrive intact?
+  </p>
+
+  <div class="card" id="status">Checking…</div>
+
+  <h2>What to do</h2>
+  <ol>
+    <li>Open this page in <strong>Chrome on the phone</strong>.</li>
+    <li>Menu (⋮) → <strong>Add to Home screen</strong> / <strong>Install app</strong>.</li>
+    <li>Open <strong>YouTube</strong>, pick any video, tap <strong>Share</strong>.</li>
+    <li>Look for <strong>Stash</strong> in the sheet. Tap it.</li>
+  </ol>
+
+  <h2>If Stash is not in the sheet</h2>
+  <p>
+    Uninstall the app completely and install it again. Android caches the manifest,
+    and a reinstall is the only thing that picks up a change to it.
+  </p>
+
+  <div class="card">
+    <div class="row"><span class="key">Origin</span><span class="val" id="origin"></span></div>
+    <div class="row"><span class="key">Share action</span><span class="val" id="action"></span></div>
+  </div>
+
+  <script>
+    const set = (id, text, cls) => {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      if (cls) el.className = cls;
+    };
+    set('origin', location.origin);
+
+    fetch('/manifest.webmanifest')
+      .then((r) => r.json())
+      .then((m) => {
+        const action = m.share_target?.action ?? '(none)';
+        set('action', action);
+        const absolute = /^https?:\/\//.test(action);
+        const sameOrigin = action.startsWith(location.origin);
+        // A relative action installs cleanly and never appears in the sheet.
+        // It is the single most common cause and worth checking here rather
+        // than discovering it on a phone.
+        set('status',
+          absolute && sameOrigin
+            ? 'Manifest looks right: the share action is an absolute URL on this origin.'
+            : absolute
+              ? 'Share action is absolute but points at a different origin — it will not work.'
+              : 'Share action is NOT an absolute URL. It will install and never appear in the share sheet.',
+          absolute && sameOrigin ? 'card ok' : 'card bad');
+      })
+      .catch((e) => set('status', 'Could not read the manifest: ' + e.message, 'card bad'));
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
+</body>
+</html>
