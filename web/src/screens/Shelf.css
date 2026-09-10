@@ -1,0 +1,58 @@
+/* Spec: 04-DESIGN-SYSTEM.md §5.3, §5.4, §7.6 */
+
+.shelf { display: flex; flex-direction: column; gap: var(--s3); }
+
+.shelf__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+/* Shelf health: informational, never blocking (01-PRD.md F11.4). */
+.shelf__count { margin: 0; font-size: var(--t-sm); color: var(--text-dim); }
+
+.shelf__views { display: flex; gap: var(--s1); }
+
+.shelf__view {
+  min-height: var(--touch-min);
+  padding: 0 var(--s3);
+  font: inherit;
+  font-size: var(--t-sm);
+  color: var(--text-dim);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+/* Active filters and toggles are never colour-coded by category — colour
+   belongs to the images (§7.5). */
+.shelf__view.is-on {
+  color: var(--text);
+  background: var(--surface-lit);
+  border-color: var(--line-strong);
+}
+
+.stack, .board { list-style: none; margin: 0; padding: 0; }
+.stack > li { display: block; }
+
+.empty__action {
+  color: var(--signal);
+  font-size: var(--t-base);
+  min-height: var(--touch-min);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* A link inside a line of text, not a control competing with the toggles. */
+.shelf__link {
+  padding: 0;
+  font: inherit;
+  font-size: var(--t-sm);
+  color: var(--signal);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

@@ -1,0 +1,199 @@
+/* Spec: 04-DESIGN-SYSTEM.md §6, §7.1. Every value from tokens.css. */
+
+.card {
+  position: relative;
+  display: flex;
+  gap: var(--s3);
+  height: var(--card-height);
+  padding: var(--s3);
+  background: var(--surface);
+  border-radius: var(--r-card);
+  border-bottom: 1px solid var(--line);
+  transition: background var(--press) var(--ease);
+}
+
+/* No hover lift and no shadow anywhere — §7.1. Press is a surface change,
+   which is how elevation works in a dark interface. */
+.card:has(.card__hit:active) { background: var(--surface-lit); }
+.card:has(.card__hit:focus-visible) { background: var(--surface-lit); }
+
+/* The card is one target. The button sits under the content so text stays
+   selectable and the "still want this?" button stays clickable. */
+.card__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: var(--r-card);
+  cursor: pointer;
+}
+
+.card__image,
+.card__body { position: relative; z-index: 1; pointer-events: none; }
+
+/* The left rule. It appears on no other element in the product. */
+.card--stale::before,
+.card--overdue::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 2;
+  width: var(--stale-rule);
+  background: var(--signal);
+  border-radius: var(--r-card) 0 0 var(--r-card);
+}
+
+.card__image {
+  flex: 0 0 var(--card-image);
+  width: var(--card-image);
+  height: var(--card-image);
+  border-radius: calc(var(--r-card) - 2px);
+  background: var(--surface-raised);
+  object-fit: cover;
+}
+.card__image--none { background: var(--surface-raised); }
+
+/* The opacity taper is the second signal — stale items literally recede. */
+.card--stale .card__image { opacity: 0.88; }
+.card--overdue .card__image { opacity: 0.75; }
+
+.card__body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+.card__title {
+  margin: 0;
+  font-size: var(--t-md);
+  line-height: var(--t-md-lh);
+  font-weight: var(--t-md-w);
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.card__meta {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s3);
+  font-size: var(--t-sm);
+  line-height: var(--t-sm-lh);
+}
+.card__price { order: 2; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.card__site { order: 1; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.card__age {
+  font-size: var(--t-sm);
+  line-height: var(--t-sm-lh);
+  color: var(--text-faint);
+  display: flex;
+  gap: var(--s1);
+  align-items: baseline;
+}
+.card__age--overdue { color: var(--signal); }
+.card__flag { color: var(--text-faint); }
+
+.card__review {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  margin-left: auto;
+  padding: 0;
+  font: inherit;
+  font-size: var(--t-sm);
+  color: var(--signal);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ── Board view (§5.4) — secondary, for "I'd know it if I saw it" ─────────── */
+
+.board { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s3); }
+
+.board .card {
+  flex-direction: column;
+  height: auto;
+  gap: var(--s2);
+}
+.board .card__image {
+  flex: none;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+}
+.board .card__title {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: var(--t-sm);
+}
+.board .card__age, .board .card__site { display: none; }
+
+/* ── The one orchestrated moment (§7.4) ────────────────────────────────────────
+ *
+ * When a save is confirmed the card assembles in place: the frame draws first,
+ * the title arrives from the metadata already known, the image cross-fades in
+ * when it resolves, and the price settles last. About 400ms end to end.
+ *
+ * This is worth the whole motion budget because it does a job beyond delight —
+ * it makes the enrichment pipeline visible. A card that silently changes a few
+ * seconds later is unsettling; a card that assembles is legible, and the user
+ * ends up trusting that the background work happened.
+ *
+ * Everything else in this product uses motion only to answer a direct action.
+ * No entrance animations on scroll, no hover transitions on cards, no page
+ * transitions — those are the default, and they read as generated.
+ */
+
+@keyframes card-frame {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes card-part {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes card-image-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.card--assembling {
+  animation: card-frame var(--assemble) var(--ease) both;
+}
+.card--assembling .card__title {
+  animation: card-part calc(var(--assemble) * 0.55) var(--ease) calc(var(--assemble) * 0.15) both;
+}
+.card--assembling .card__image {
+  animation: card-image-in calc(var(--assemble) * 0.6) var(--ease) calc(var(--assemble) * 0.3) both;
+}
+/* Last, because it is the fact that arrives last from the ladder. */
+.card--assembling .card__meta {
+  animation: card-part calc(var(--assemble) * 0.5) var(--ease) calc(var(--assemble) * 0.55) both;
+}
+.card--assembling .card__age {
+  animation: card-part calc(var(--assemble) * 0.5) var(--ease) calc(var(--assemble) * 0.55) both;
+}
+
+/* An image that arrives after the card is already on screen cross-fades rather
+   than appearing. Same reason: a silent swap is the unsettling version. */
+.card__image { animation: card-image-in var(--press) var(--ease); }
+
+@media (prefers-reduced-motion: reduce) {
+  /* The card simply appears complete. §7.4 */
+  .card--assembling,
+  .card--assembling .card__title,
+  .card--assembling .card__image,
+  .card--assembling .card__meta,
+  .card--assembling .card__age,
+  .card__image { animation: none; }
+}
