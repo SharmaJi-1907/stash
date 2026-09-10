@@ -19,6 +19,7 @@ import type { Env } from './env';
 import { auth } from './middleware/auth';
 import { rateLimit } from './middleware/rateLimit';
 import { items } from './routes/items';
+import { sync } from './routes/sync';
 import { images } from './routes/images';
 import type { ApiError, ErrorCode, HealthResponse } from '../../shared/types';
 
@@ -49,8 +50,9 @@ v1.use('*', auth);
 v1.use('*', rateLimit);
 
 v1.route('/items', items);
+v1.route('/sync', sync);
 
-// P2 adds sync, uploads and images.
+// P2 adds uploads and export.
 
 app.route('/v1', v1);
 

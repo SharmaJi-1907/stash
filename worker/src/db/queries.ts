@@ -5,7 +5,10 @@
  */
 
 import type { Item } from '../../../shared/types';
-import { rowToItem, type ItemRow } from './schema';
+import {
+  rowToItem, rowToCategory, rowToTag,
+  type ItemRow, type CategoryRow, type TagRow,
+} from './schema';
 
 const ITEM_COLUMNS = `
   id, url, canonical_url, url_hash, title, description, note,
@@ -215,4 +218,59 @@ export async function replaceItemTags(db: D1Database, itemId: string, tagIds: st
     );
   }
   await db.batch(statements);
+}
+
+/* ── sync ──────────────────────────────────────────────────────────────────── */
+
+/**
+ * Everything that changed since a timestamp, tombstones included.
+ *
+ * Spec: 02-TRD.md §5.2 · 03-ARCHITECTURE.md §6.1
+ *
+ * Ordered by updated_at rather than created_at, because the client resumes from
+ * the highest updated_at it received. Ordering by anything else means a row
+ * changed during a paged sync can be skipped forever.
+ */
+export async function itemsChangedSince(
+  db: D1Database,
+  since: number,
+  limit: number,
+): Promise<{ items: Item[]; hasMore: boolean }> {
+  const { results } = await db
+    .prepare(
+      `SELECT ${ITEM_COLUMNS} FROM items
+       WHERE updated_at > ?
+       ORDER BY updated_at ASC, id ASC
+       LIMIT ?`,
+    )
+    .bind(since, limit + 1)
+    .all<ItemRow>();
+
+  const hasMore = results.length > limit;
+  const page = hasMore ? results.slice(0, limit) : results;
+  return { items: await hydrate(db, page), hasMore };
+}
+
+export async function categoriesChangedSince(db: D1Database, since: number) {
+  const { results } = await db
+    .prepare('SELECT * FROM categories WHERE updated_at > ? ORDER BY updated_at ASC')
+    .bind(since)
+    .all<CategoryRow>();
+  return results.map(rowToCategory);
+}
+
+export async function tagsChangedSince(db: D1Database, since: number) {
+  const { results } = await db
+    .prepare('SELECT * FROM tags WHERE created_at > ? ORDER BY created_at ASC')
+    .bind(since)
+    .all<TagRow>();
+  return results.map(rowToTag);
+}
+
+/* ── export ────────────────────────────────────────────────────────────────── */
+
+/** Every row of a table, for the export. Spec: 01-PRD.md F12 */
+export async function allRows<T>(db: D1Database, table: string): Promise<T[]> {
+  const { results } = await db.prepare(`SELECT * FROM ${table}`).all<T>();
+  return results;
 }
