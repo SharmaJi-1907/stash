@@ -1,0 +1,89 @@
+/* Spec: 04-DESIGN-SYSTEM.md §7.2, §9. Values from tokens.css only. */
+
+.detail { display: flex; flex-direction: column; gap: var(--s4); max-width: 520px; }
+
+.detail__image {
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 320px;
+  object-fit: contain;
+  background: var(--surface-raised);
+  border-radius: var(--r-card);
+}
+.detail__image--none { display: block; }
+
+.detail__title {
+  margin: 0;
+  font-size: var(--t-lg);
+  line-height: var(--t-lg-lh);
+  font-weight: var(--t-lg-w);
+  letter-spacing: var(--tracking-tight);
+  overflow-wrap: anywhere;
+}
+
+.detail__facts { margin: 0; display: flex; flex-direction: column; gap: var(--s2); }
+.detail__facts > div { display: flex; gap: var(--s3); justify-content: space-between; }
+.detail__facts dt { font-size: var(--t-sm); color: var(--text-faint); }
+.detail__facts dd {
+  margin: 0;
+  font-size: var(--t-sm);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.detail__overdue { color: var(--signal); }
+
+.detail__description {
+  margin: 0;
+  max-width: 68ch;
+  font-size: var(--t-base);
+  color: var(--text-dim);
+}
+
+.detail__field { display: flex; flex-direction: column; gap: var(--s1); }
+.detail__label { font-size: var(--t-sm); color: var(--text-dim); }
+.detail textarea {
+  width: 100%;
+  padding: var(--s2) var(--s3);
+  font: inherit;
+  font-size: var(--t-base);
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  resize: vertical;
+}
+
+.detail__actions { display: flex; gap: var(--s2); flex-wrap: wrap; }
+
+.detail__action {
+  flex: 1 1 auto;
+  min-height: var(--touch-min);
+  padding: 0 var(--s3);
+  font: inherit;
+  font-size: var(--t-sm);
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  cursor: pointer;
+}
+/* Status is never colour alone — the word is there too (§3.3.4). */
+.detail__action--bought { border-color: var(--settled); color: var(--settled); }
+.detail__action--drop { border-color: var(--drop); color: var(--drop); }
+
+.detail__open { color: var(--signal); font-size: var(--t-base); min-height: var(--touch-min); display: inline-flex; align-items: center; }
+
+.detail__delete {
+  align-self: flex-start;
+  min-height: var(--touch-min);
+  padding: 0;
+  font: inherit;
+  font-size: var(--t-sm);
+  color: var(--text-faint);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
