@@ -17,6 +17,7 @@
 import { Hono } from 'hono';
 import type { Env } from './env';
 import { auth } from './middleware/auth';
+import { cors } from './middleware/cors';
 import { rateLimit } from './middleware/rateLimit';
 import { items } from './routes/items';
 import { sync } from './routes/sync';
@@ -28,6 +29,10 @@ import type { ApiError, ErrorCode, HealthResponse } from '../../shared/types';
 type App = { Bindings: Env };
 
 const app = new Hono<App>();
+
+// Before everything, including auth: a preflight arrives with no token, and
+// answering it with 401 stops the real request from ever being sent.
+app.use('*', cors);
 
 /** The error envelope from 02-TRD.md §5.3. One shape for every failure. */
 function apiError(code: ErrorCode, message: string): ApiError {
