@@ -1,4 +1,16 @@
 {
   "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    // DOM is here for `URL`, `URLSearchParams`, `crypto.subtle` and
+    // `TextEncoder` (with DOM.Iterable for their iterators) — all of which exist in the Worker, the browser and the extension
+    // alike, but which TypeScript still files under the DOM library for
+    // historical reasons.
+    //
+    // It does NOT loosen the rule this folder lives by: nothing here may use an
+    // API that only a browser has. The rule is why `BlobLike` in types.ts is
+    // declared structurally instead of naming the built-in `Blob`. Adding a
+    // `document` reference would typecheck and would still be wrong.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+  },
   "include": ["*.ts"]
 }

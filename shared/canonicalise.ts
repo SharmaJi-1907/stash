@@ -3,6 +3,22 @@
  *
  * Spec: 03-ARCHITECTURE.md §4.1 · test cases in 06-AGENT-BUILD-GUIDE.md §4.1
  *
+ * ── Why this lives in shared/ and not worker/src/lib/ ───────────────────────
+ *
+ * 03-ARCHITECTURE.md §10 puts it under the Worker. It moved because the client
+ * needs the same answer: a save is written to IndexedDB before any network call,
+ * so the client has to decide for itself whether a URL is already on the shelf.
+ * Without that, saving the same link twice on a train produces two local rows
+ * that collapse into one on the server and leave the phone showing a duplicate
+ * that never resolves.
+ *
+ * Two copies of this logic would be worse than moving it: dedupe is only correct
+ * if both sides agree on every rule, and a rule added to one copy is a shelf
+ * that quietly disagrees with itself.
+ *
+ * It stays environment-free, which is the rule for this folder — only `URL` and
+ * `crypto.subtle`, both present in the Worker, the browser and the extension.
+ *
  * Two URLs pointing at the same product must produce the same `url_hash`, or
  * dedupe fails and the shelf fills with near-identical rows that each look
  * correct on their own. That is the whole job of this file.

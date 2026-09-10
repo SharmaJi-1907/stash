@@ -12,7 +12,7 @@
 
 import { Hono } from 'hono';
 import type { Env } from '../env';
-import { canonicalise, urlHash } from '../lib/canonicalise';
+import { canonicalise, urlHash } from '../../../shared/canonicalise';
 import { enrichItem, storeScrapedImage } from '../lib/enrich';
 import { parsePrice } from '../lib/price';
 import {

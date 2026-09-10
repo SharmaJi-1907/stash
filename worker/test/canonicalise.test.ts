@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { canonicalise, urlHash, isShortener } from '../src/lib/canonicalise';
+import { canonicalise, urlHash, isShortener } from '../../shared/canonicalise';
 import fixtures from './fixtures/links.json';
 
 /**

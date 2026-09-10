@@ -6,7 +6,8 @@
   "main": "./types.ts",
   "types": "./types.ts",
   "exports": {
-    ".": "./types.ts"
+    ".": "./types.ts",
+    "./canonicalise": "./canonicalise.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
