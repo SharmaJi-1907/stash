@@ -1,18 +1,23 @@
 {
   "name": "Stash",
   "short_name": "Stash",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#101620",
   "theme_color": "#101620",
+  "description": "A private shelf for things you want but have not bought.",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
+  "shortcuts": [
+    { "name": "Paste a link", "url": "/add" }
+  ],
   "share_target": {
-    "action": "https://stash.pages.dev/share",
+    "action": "https://stash-1ju.pages.dev/share",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": {
