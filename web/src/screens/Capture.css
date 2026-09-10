@@ -1,0 +1,65 @@
+/* Spec: 04-DESIGN-SYSTEM.md §7.3. Values from tokens.css only. */
+
+.capture { display: flex; flex-direction: column; gap: var(--s4); max-width: 480px; }
+
+.capture__preview { display: flex; gap: var(--s3); align-items: flex-start; }
+
+.capture__thumb {
+  flex: 0 0 var(--card-image);
+  width: var(--card-image);
+  height: var(--card-image);
+  border-radius: calc(var(--r-card) - 2px);
+  background: var(--surface-raised);
+}
+
+.capture__about { min-width: 0; }
+.capture__status {
+  margin: 0;
+  font-size: var(--t-md);
+  line-height: var(--t-md-lh);
+  font-weight: var(--t-md-w);
+  color: var(--text);
+}
+.capture__host {
+  margin: var(--s1) 0 0;
+  font-size: var(--t-sm);
+  line-height: var(--t-sm-lh);
+  color: var(--text-dim);
+}
+
+.capture__field { display: flex; flex-direction: column; gap: var(--s1); }
+.capture__label { font-size: var(--t-sm); color: var(--text-dim); }
+
+.capture input,
+.capture textarea {
+  width: 100%;
+  padding: var(--s2) var(--s3);
+  font: inherit;
+  font-size: var(--t-base);
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+}
+.capture textarea { resize: vertical; min-height: calc(var(--touch-min) + var(--s3)); }
+
+.capture__save {
+  min-height: var(--touch-min);
+  padding: var(--s3);
+  font: inherit;
+  font-size: var(--t-md);
+  font-weight: var(--t-md-w);
+  color: var(--bg);
+  background: var(--text);
+  border: 0;
+  border-radius: var(--r-input);
+  cursor: pointer;
+  transition: opacity var(--press) var(--ease);
+}
+.capture__save:active { opacity: 0.85; }
+
+.capture__refused { margin: 0; font-size: var(--t-sm); color: var(--drop); }
+
+.capture--done { align-items: flex-start; gap: var(--s3); padding-top: var(--s6); }
+.capture__done { margin: 0; font-size: var(--t-lg); font-weight: var(--t-lg-w); color: var(--settled); }
+.capture__back { color: var(--signal); font-size: var(--t-base); }
