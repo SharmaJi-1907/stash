@@ -20,6 +20,7 @@ import { auth } from './middleware/auth';
 import { rateLimit } from './middleware/rateLimit';
 import { items } from './routes/items';
 import { sync } from './routes/sync';
+import { uploads } from './routes/uploads';
 import { images } from './routes/images';
 import type { ApiError, ErrorCode, HealthResponse } from '../../shared/types';
 
@@ -51,8 +52,9 @@ v1.use('*', rateLimit);
 
 v1.route('/items', items);
 v1.route('/sync', sync);
+v1.route('/uploads', uploads);
 
-// P2 adds uploads and export.
+// P2 adds export.
 
 app.route('/v1', v1);
 
