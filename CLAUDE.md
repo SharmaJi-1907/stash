@@ -119,25 +119,50 @@ Wire format is camelCase; the D1 tables are snake_case, and the mapping lives in
 
 ## Current state
 
-P0 is nearly done. Everything below is built, deployed nowhere yet, and verified locally.
+P0 and P1 are done, deployed, and verified against real pages in a real browser.
 
 | Phase | Delivers | State |
 |-------|----------|-------|
-| P0 | Foundation — deploy, database, auth | schema, `/health`, auth, rate limit **done**; deploy blocked |
-| P1 | Capture and enrich — Worker API, extension | not started |
+| P0 | Foundation — deploy, database, auth | **done**, live |
+| P1 | Capture and enrich — Worker API, extension | **done**, live |
 | P2 | The app — PWA, share target, shelf, sync | not started |
 | — | *Stop. Two weeks of real use before P3.* | — |
 | P3–P5 | Organise, decide, price tracking | not started |
 
-Everything under `worker/src/routes/`, `worker/src/lib/`, `web/src/` and `extension/src/`
-is a stub carrying a header comment with its spec reference and phase. They are a map, not
-code.
+Live at `https://stash-api.sharmaabhinav1907.workers.dev`. D1 is
+`494af926-6f76-4794-82f9-998ed1080e63` (APAC), R2 bucket `stash-images`. A card is on the
+Cloudflare account because R2 cannot be enabled without one — a knowing departure from
+`docs/02-TRD.md` C1, decided by the user on 2026-09-09 and recorded in
+`.credentials.local.md`.
 
-**Deploy is blocked on a decision, not on work.** D1 exists in production
-(`494af926-6f76-4794-82f9-998ed1080e63`, APAC) with all seven tables applied. R2 requires
-enabling through the Cloudflare dashboard, which asks for a card — in direct conflict with
-`docs/02-TRD.md` C1 ("no credit card on file"). The user chose to add the card; until the
-bucket exists, `wrangler deploy` will fail on the R2 binding.
+297 tests, all passing. The fixture set clears its bar: `docs/01-PRD.md` F2 wants 16 of 20
+usable and production gives 17.
+
+**`docs/05-ROADMAP.md` P1's last criterion — amazon.in through the extension captures the
+correct price — is met.** Verified on real pages, 2026-09-10:
+
+| Page | Saved | Correct |
+|---|---|---|
+| amazon.in, drill kit at -40% | ₹3,499 | yes, and not the ₹5,799 M.R.P. beside it |
+| flipkart.com, gaming laptop | ₹79,990 | yes, from a site whose server response is titled "Flipkart reCAPTCHA" |
+| reliancedigital.in, phone | ₹18,499 | yes, with no selector written for that site |
+| amazon.com, item with no featured offer | nothing | yes — declining is the right answer there |
+
+The last row matters as much as the others. That page offered an easy $114.99 belonging to
+a sponsored product elsewhere on it; saving nothing is correct, and the item is on the
+shelf with its title and image and no price.
+
+Two guards in `content.js` earn their place, and both were added after a wrong price
+reached a real shelf: `insideAnotherProduct()` skips sponsored strips, carousels and
+"similar items", and `isWasPrice()` skips struck-through amounts, which Amazon writes with
+exactly the same `.a-price .a-offscreen` markup as the real one.
+
+**Apply both to the selector path, not only the fallback.** That was the actual bug: the
+guards lived only in the generic scan, on the assumption that a selector hit is more
+trustworthy. It is not — it is only faster. Both wrong prices came through selectors.
+
+Everything under `web/src/` is still a stub carrying its spec reference and phase. The
+Worker and the extension are real.
 
 ## Deviations from the documents
 
@@ -159,7 +184,8 @@ the platform's own hard stop is 100,000 requests/day on the free plan. If exactn
 matters, the fix is the native rate-limiting binding or a Durable Object — both exact, both
 Cloudflare-only.
 
-**`image_bytes` on the items table** (P1, not yet built). Not in `docs/02-TRD.md` §4. It
+**`image_bytes` on the items table.** Added in `migrations/0002_image_bytes.sql`. Not in
+`docs/02-TRD.md` §4. It
 carries the stored size of each item's image so the daily cron can total live storage
 exactly and subtract correctly when tombstones are purged — a single running counter
 cannot, because a purge would not know how much to subtract. The size is already measured
@@ -172,8 +198,8 @@ cron in `docs/03-ARCHITECTURE.md` §9 already recomputes into `settings`:
 
 The user asked for this because R2 now has a card attached, and Cloudflare's billing alert
 arrives as an email that gets lost among daily mail. An indicator in the app is seen every
-time the shelf is opened. Add the column and the byte accounting in the same commit as the
-image upload in P1 — there is nothing to record before then.
+time the shelf is opened. The column and the byte accounting exist; the shelf-health line
+that reads them is P2/P4 work.
 
 **`worker/src/env.ts`, not `env.d.ts`.** `Env` is imported by every route and middleware,
 so it is a normal module rather than an ambient declaration.
@@ -202,6 +228,13 @@ request. It does not occur in production, where no dev proxy exists.
 `POST /items/:id/enrich` and `POST /items/:id/review` take no body, so this will resurface
 in P1 and P4. Send `{}` when testing them by hand. Do not change the Worker for it.
 Details in `worker/README.md`.
+
+**A second one, in the extension.** A content script only enters a page when that page
+loads, so after the extension is reloaded every already-open tab has none and
+`chrome.tabs.sendMessage` fails. The symptom is a popup with an empty title and no price
+line — indistinguishable from a page that carries no metadata, which is what made it cost
+a debugging round. The popup and background now inject the script on demand and say so
+when even that is refused (Chrome's own pages, the Web Store, PDFs).
 
 ## Secrets
 
