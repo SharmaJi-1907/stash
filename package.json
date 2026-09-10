@@ -26,7 +26,9 @@
     "test:fixtures": "npm run test:fixtures --workspace worker",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "check:secrets": "bash scripts/check-secrets.sh"
+    "check:secrets": "bash scripts/check-secrets.sh",
+    "r2": "bash scripts/r2-usage.sh",
+    "check:contrast": "node scripts/check-contrast.mjs"
   },
   "allowScripts": {
     "esbuild@0.28.1": true,
