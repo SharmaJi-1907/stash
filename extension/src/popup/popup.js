@@ -61,15 +61,18 @@ async function init() {
         // Say so rather than leaving a blank space. A missing price that looks
         // like nothing is a bug that never gets reported.
         const d = reply.diagnostics ?? {};
+        // Saying which of these is true turns "no price" from a dead end into
+        // something reportable.
         const found = [
           d.jsonLd ? 'JSON-LD' : null,
           d.ogTitle ? 'og tags' : null,
           d.selectorHit ? 'a price selector' : null,
-          d.scanHit ? 'price-shaped text' : null,
         ].filter(Boolean);
-        $('price').textContent = found.length
-          ? `No price read. Page has: ${found.join(', ')}.`
-          : 'No price found on this page.';
+        $('price').textContent = d.scanDeclined
+          ? 'Several different prices on this page — none saved, so none is wrong.'
+          : found.length
+            ? `No price read. Page has: ${found.join(', ')}.`
+            : 'No price found on this page.';
       }
     }
   } catch (e) {

@@ -56,6 +56,48 @@ const PRICE_SELECTORS = [
   '.price',
 ];
 
+/** Regions that hold something other than this product's price. */
+const NOT_THE_PRODUCT = [
+  '[cel_widget_id*="sponsored" i]', '[data-component-type*="sp_" i]',
+  '.a-carousel', '[data-a-carousel-options]', '#similarities_feature_div',
+  '#sims-consolidated-2_feature_div', '#HLCXComparisonWidget_feature_div',
+  '#rhf', '#navFooter', 'footer', 'nav', 'header',
+];
+
+/**
+ * Markers for an amount that is not what the thing costs now.
+ *
+ * Amazon writes the M.R.P. with the same .a-price .a-offscreen markup as the
+ * real price and distinguishes it only by `a-text-price` and a strike. Measured
+ * on amazon.in 2026-09-10: a drill kit at -40% ₹3,499 with M.R.P. ₹5,799 was
+ * read as ₹5,799 — a price that is both wrong and higher than the truth, which
+ * is the worst direction for it to be wrong in.
+ */
+const STRUCK_THROUGH = [
+  '.a-text-price', '[data-a-strike="true"]', '.a-price[data-a-strike]',
+  's', 'del', 'strike', '.priceBlockStrikePriceString', '.a-text-strike',
+];
+
+function insideAnotherProduct(el) {
+  return NOT_THE_PRODUCT.some((sel) => el.closest(sel));
+}
+
+/**
+ * True when this amount is a was-price rather than an is-price.
+ *
+ * The strike often sits on an ancestor rather than the element holding the text —
+ * .a-offscreen is visually hidden, so its own computed style says nothing — which
+ * is why this walks up a few levels as well as checking the class markers.
+ */
+function isWasPrice(el) {
+  if (STRUCK_THROUGH.some((sel) => el.closest(sel))) return true;
+  for (let node = el, hops = 0; node && hops < 4; node = node.parentElement, hops++) {
+    const style = getComputedStyle(node);
+    if (style.textDecorationLine.includes('line-through')) return true;
+  }
+  return false;
+}
+
 function textOf(el) {
   if (!el) return '';
   const attr = el.getAttribute?.('content') ?? el.getAttribute?.('data-price');
@@ -70,40 +112,68 @@ function looksLikePrice(text) {
 }
 
 /**
- * Last resort: look for price-shaped text anywhere in the page's main region.
+ * Last resort: look for price-shaped text in the page's main region.
  *
- * Selector lists go stale — every marketplace renames its classes eventually,
- * and a save that silently loses the price is worse than one that finds a
- * slightly wrong element, because the item still looks complete. This finds the
- * first currency-marked amount inside the top of the document, which is where a
- * product page puts the price it wants you to read.
+ * Deliberately timid, and the reason is a real failure. On an amazon.com page
+ * with no featured offer — the product could not be shipped to the user's
+ * address, so the page showed only variant options at $209.99, $249.99 and
+ * $399.99 — an earlier version of this returned $114.99, a number belonging to
+ * some other product entirely on the same page. The item then looked complete
+ * and carried a price that was simply wrong.
+ *
+ * 03-ARCHITECTURE.md §4.4 rule 5 is explicit that a confidently wrong price is
+ * worse than none, so this now declines whenever it is not sure:
+ *
+ *   · regions holding other products — sponsored strips, carousels, "similar
+ *     items", the footer — are skipped entirely
+ *   · if the candidates disagree, it returns nothing. Several different amounts
+ *     in the main region means the page has several prices and this has no way
+ *     to know which one is the product's.
+ *
+ * Declining is the right answer more often than it looks. This only runs when
+ * every selector has already failed, which on a real product page means the
+ * page is not laid out the way a product page usually is.
  */
 function scanForPrice() {
-  const root = document.querySelector('main, #dp, #centerCol, [role="main"]') || document.body;
+  const root = document.querySelector('#dp, #centerCol, main, [role="main"]') || document.body;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const found = new Set();
   let seen = 0;
-  while (walker.nextNode() && seen < 4000) {
+
+  while (walker.nextNode() && seen < 4000 && found.size < 4) {
     seen++;
     const text = (walker.currentNode.textContent || '').trim();
     if (text.length > 24 || !/[₹$£€¥]/.test(text) || !/\d/.test(text)) continue;
+
     const parent = walker.currentNode.parentElement;
-    if (!parent) continue;
-    // Struck-through list prices and hidden variant templates are not the price.
+    if (!parent || insideAnotherProduct(parent)) continue;
+
+    if (isWasPrice(parent)) continue;
     const style = getComputedStyle(parent);
-    if (style.textDecorationLine.includes('line-through')) continue;
     if (style.display === 'none' || style.visibility === 'hidden') continue;
-    if (looksLikePrice(text)) return text;
+
+    if (looksLikePrice(text)) found.add(text.replace(/\s+/g, ''));
   }
-  return '';
+
+  // One unambiguous answer, or none at all.
+  return found.size === 1 ? [...found][0] : '';
 }
 
 function visiblePrice() {
   for (const selector of PRICE_SELECTORS) {
     for (const el of document.querySelectorAll(selector)) {
-      // Skip anything the page has hidden — struck-through "was" prices and
-      // variant templates are usually display:none.
+      // These two guards used to live only in the generic fallback, and both
+      // failures that reached a real shelf came through here instead: a
+      // sponsored product's $114.99 on a page whose own product had no offer,
+      // and an M.R.P. of ₹5,799 on an item selling at ₹3,499. A selector hit is
+      // not more trustworthy than a scan hit — it is just faster.
+      if (insideAnotherProduct(el)) continue;
+      if (isWasPrice(el)) continue;
+
+      // .a-offscreen is deliberately hidden from sight but carries Amazon's real
+      // price text, so the visibility check does not apply to it.
       const style = getComputedStyle(el);
-      const offscreen = el.classList.contains('a-offscreen');   // Amazon's real price
+      const offscreen = el.classList.contains('a-offscreen');
       if (!offscreen && (style.display === 'none' || style.visibility === 'hidden')) continue;
 
       const text = textOf(el);
@@ -224,6 +294,7 @@ function diagnose() {
       return el && looksLikePrice(textOf(el));
     }) || null,
     scanHit: Boolean(scanForPrice()),
+    scanDeclined: !scanForPrice() && /[₹$£€¥]\s*[\d,]/.test(document.body.innerText || ''),
   };
 }
 
