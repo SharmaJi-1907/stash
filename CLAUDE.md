@@ -125,11 +125,13 @@ P0 and P1 are done, deployed, and verified against real pages in a real browser.
 |-------|----------|-------|
 | P0 | Foundation — deploy, database, auth | **done**, live |
 | P1 | Capture and enrich — Worker API, extension | **done**, live |
-| P2 | The app — PWA, share target, shelf, sync | not started |
+| P2 | The app — PWA, share target, shelf, sync | **task 1 passed**, rest not started |
 | — | *Stop. Two weeks of real use before P3.* | — |
 | P3–P5 | Organise, decide, price tracking | not started |
 
-Live at `https://stash-api.sharmaabhinav1907.workers.dev`. D1 is
+Live at `https://stash-api.sharmaabhinav1907.workers.dev`. The web app is at
+`https://stash-1ju.pages.dev` — `stash.pages.dev` was taken, so Cloudflare added the
+suffix, and the manifest's absolute share-target action must match it exactly. D1 is
 `494af926-6f76-4794-82f9-998ed1080e63` (APAC), R2 bucket `stash-images`. A card is on the
 Cloudflare account because R2 cannot be enabled without one — a knowing departure from
 `docs/02-TRD.md` C1, decided by the user on 2026-09-09 and recorded in
@@ -163,6 +165,25 @@ trustworthy. It is not — it is only faster. Both wrong prices came through sel
 
 Everything under `web/src/` is still a stub carrying its spec reference and phase. The
 Worker and the extension are real.
+
+**P2 task 1 — the Android share target — passed on 2026-09-10.** `docs/01-PRD.md` R3 calls
+it the highest-risk assumption in the system, and `docs/05-ROADMAP.md` gates the phase on
+it. A minimal PWA in `web/share-target-check/` was installed on the real phone and a
+YouTube video shared to it.
+
+Two things came out of it that the rest of P2 depends on:
+
+**The URL arrives in `text`, not `url`.** The `url` field was empty. The guide warns this
+happens "depending on the sharing app"; measured here it is simply what happens. Code that
+reads `form.get('url')` and stops receives nothing and looks like a broken share target.
+Take the URL from whichever field carries one.
+
+**A fourth silent-failure mode exists, beyond the three the guide lists.** A `_redirects`
+rule mapping `/share` to `/share.html` fought Cloudflare Pages' own clean-URL redirect and
+the two cancelled into `308 location: /share` — an endless loop on the exact path the share
+target posts to, with `POST` answering 405. Pages already serves `share.html` at `/share`;
+the rule was removed. On a phone this is indistinguishable from the share target not
+working at all.
 
 ## Deviations from the documents
 
@@ -200,6 +221,24 @@ The user asked for this because R2 now has a card attached, and Cloudflare's bil
 arrives as an email that gets lost among daily mail. An indicator in the app is seen every
 time the shelf is opened. The column and the byte accounting exist; the shelf-health line
 that reads them is P2/P4 work.
+
+**Four colour tokens differ from `docs/04-DESIGN-SYSTEM.md` §3.1**, and the document
+asked for it. §4 says its values are binding; §9 says contrast is 4.5:1 for body text and
+3:1 for interface boundaries in both themes and is "not optional, not a later phase".
+Measured, §3.1's own colours fail §9:
+
+    --text-faint  on --surface   dark 3.28:1   light 2.96:1   needs 4.5
+    --line-strong on --surface   dark 1.79:1   light 1.65:1   needs 3.0
+
+§9 even names the first: "Verify --text-faint against --surface specifically — it is the
+value most likely to fail." It does. Both are lightened along the same hue until they clear
+the floor and no further, in both themes. The palette's character is unchanged; what
+changes is that the metadata line is readable — and that line carries the age of every
+item, which §6 calls the strongest available signal that a decision is overdue. A design
+whose most important field is its least legible one has an ordering problem.
+
+`npm run check:contrast` proves all twenty pairs and fails if anyone puts the old values
+back. Verified by putting them back.
 
 **`worker/src/env.ts`, not `env.d.ts`.** `Env` is imported by every route and middleware,
 so it is a normal module rather than an ambient declaration.
@@ -262,6 +301,13 @@ The user directs and decides; they do not read code. This shapes how work is don
 - **Show real output, not claims.** Run the thing, paste what it printed, and say plainly
   what was *not* covered. A test that cannot fail proves nothing — `check-secrets.sh` was
   validated by planting leaks and watching it catch them.
+- **Report R2 usage every time R2 is touched** — a test that stores an image, a
+  build, a deploy, any manual poke at the bucket. Run `npm run r2` and paste what it
+  says: how much is stored, what percentage of the 10 GB that is, and how much is
+  left. The user asked for this explicitly and gave the reason: they are not watching
+  the Cloudflare dashboard, and R2 is the one meter on this project with a card
+  behind it. Cloudflare's own alert is an email that gets lost. Do not wait to be
+  asked, and do not report it only when it looks bad.
 - The user writes in Hinglish and replies are written in Hinglish.
 
 ## Git workflow
