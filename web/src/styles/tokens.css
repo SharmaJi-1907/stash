@@ -1,5 +1,187 @@
-/* Design tokens — the single source of colour, type, space, radius and motion.
- * Every component reads from here. No hard-coded values in component code.
- * Spec: 04-DESIGN-SYSTEM.md §3, §4, §5 · rule 06-AGENT-BUILD-GUIDE.md §1.5
- * P2 task 3 — not yet written.
+/**
+ * Design tokens — the one source of colour, type, space, radius and motion.
+ *
+ * Spec: 04-DESIGN-SYSTEM.md §3, §4, §5, §7.4
+ * Rule: 06-AGENT-BUILD-GUIDE.md §1.5 — no hard-coded colours, sizes or spacings
+ * in component code. If a needed value is not here, question the need first,
+ * then add a token.
+ *
+ * ── Six values differ from §3.1, and the document asked for the first four ──
+ *
+ * §4 says the values here are binding. §9 says contrast is 4.5:1 for body text
+ * and 3:1 for interface boundaries, in both themes, and is "not optional, not a
+ * later phase". Measured, §3.1's own colours fail §9:
+ *
+ *   --text-faint  on --surface   dark 3.28:1   light 2.96:1   needs 4.5
+ *   --line-strong on --surface   dark 1.79:1   light 1.65:1   needs 3.0
+ *
+ * §9 even names the first: "Verify --text-faint against --surface specifically —
+ * it is the value most likely to fail." It does.
+ *
+ * ── Then the floor turned out not to be enough ──────────────────────────────
+ *
+ * At 4.53:1 — a pass — the user reported the metadata line as unreadable in dark
+ * and hard in light, looking at it on a phone. 4.5:1 is WCAG's minimum for body
+ * text, not a comfort target, and this line is 13px on a dark surface. The
+ * measurement said pass and the eye said no; the eye decides.
+ *
+ * So the ink ladder is set by readability rather than by the floor:
+ *
+ *          dark            light
+ *   text   14.03:1         17.10:1
+ *   dim     9.01:1         10.03:1
+ *   faint   6.01:1          6.69:1
+ *
+ * --text-dim moved too. Raising only --text-faint would have pushed it past
+ * --text-dim, so the quieter colour would have been the louder one — the
+ * hierarchy inverted while every individual number still looked fine.
+ *
+ * The gaps are what carry the hierarchy now, not the absolute values. This
+ * matters because the faintest colour is what carries the age on every card,
+ * which §6 calls the strongest available signal that a decision is overdue.
+ *
+ * `npm run check:contrast` holds all of it and fails if anyone moves it back.
+ *
+ * The direction, in one line: a workbench at night, not a shop window
+ * (§2.2). The interface contributes no colour of its own — product photographs
+ * supply every saturated pixel on screen. That is functional as much as it is
+ * taste: a dense list of product images against a coloured chrome is genuinely
+ * harder to read, and a neutral frame makes the shelf read as your things
+ * rather than as an app's branding.
  */
+
+:root {
+  /* ── Surfaces ──────────────────────────────────────────────────────────────
+     Cool and desaturated, blue rather than grey. Elevation is surface lightness,
+     never a shadow: in a dark interface a shadow is invisible anyway (§3.3.2). */
+  --bg:             #101620;   /* the page */
+  --surface:        #161E2B;   /* a card */
+  --surface-raised: #1E2836;   /* input, sheet, menu */
+  --surface-lit:    #26313F;   /* the item under the lamp — hover, focus, press */
+  --line:           #2B3746;   /* hairline */
+  /* §3.1 gives #3A4859, which is 1.79:1 on --surface against §9's 3:1 for an
+     interface boundary. A divider named "must be seen" that cannot be seen is
+     not doing its job. */
+  --line-strong:    #5C6A7B;   /* was #3A4859 — 1.79:1, now 3.03:1 */
+
+  /* ── Text — warm off-white against cool surfaces ─────────────────────────── */
+  --text:       #E9EBF0;   /* 14.03:1 on --surface */
+  --text-dim:   #B3BFD2;   /* §3.1: #97A3B6 (6.56:1) — now 9.01:1 */
+  --text-faint: #8F9CAF;   /* §3.1: #626F82 (3.28:1) — now 6.01:1 */
+
+  /* ── Signal — brass. Decisions and overdue items only, never decoration.
+     Exactly three uses (§3.3.1): the stale marker on an overdue card, the
+     primary action in a decision moment, and the price-drop indicator when that
+     arrives. If it shows on more than about one card in eight, its meaning has
+     been diluted and something is wrong. ─────────────────────────────────── */
+  --signal:     #E8B84B;
+  --signal-dim: #8A6E2A;
+
+  /* Settled — bought and confirmed. */
+  --settled: #5DA096;
+
+  /* Destructive, deliberately desaturated: dropping an item is routine here,
+     not alarming. It is the outcome the product is built to produce. */
+  --drop: #C4736B;
+
+  /* ── Type ──────────────────────────────────────────────────────────────────
+     IBM Plex Sans, self-hosted. Chosen for content, not looks: product titles
+     scraped from Indian sites frequently contain Devanagari, and Plex is one of
+     the few open families whose Devanagari shares its Latin's proportions and
+     weight axis, so a mixed title renders in one voice instead of two (§4.1). */
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-condensed: "IBM Plex Sans Condensed", var(--font);
+
+  /* Base 16px, ratio ≈1.2 — tight enough to keep a dense list coherent. */
+  --t-display: 28px;   --t-display-lh: 1.15;   --t-display-w: 600;
+  --t-lg:      20px;   --t-lg-lh:      1.3;    --t-lg-w:      600;
+  --t-md:      16px;   --t-md-lh:      1.45;   --t-md-w:      500;  /* the workhorse */
+  --t-base:    15px;   --t-base-lh:    1.55;   --t-base-w:    400;
+  --t-sm:      13px;   --t-sm-lh:      1.4;    --t-sm-w:      400;
+  --t-xs:      12px;   --t-xs-lh:      1.35;   --t-xs-w:      500;
+
+  /* Never positive. Tracked-out type is a tell (§4.2). */
+  --tracking-tight: -0.011em;
+
+  /* ── Space — 4px base, six steps. Resist adding a seventh (§5.1). ────────── */
+  --s1: 4px;  --s2: 8px;  --s3: 12px;
+  --s4: 16px; --s5: 24px; --s6: 40px;
+
+  /* ── Radius by role. Uniform radius everywhere is the flattest possible
+     signal and reads as a template (§5.2). ────────────────────────────────── */
+  --r-card:  10px;   /* items — the objects on the shelf */
+  --r-input:  6px;   /* fields and controls — mechanical, tighter */
+  --r-sheet: 16px;   /* bottom sheets — soft, they come from the edge */
+  --r-pill: 999px;   /* filter chips only */
+
+  /* ── Structure ───────────────────────────────────────────────────────────── */
+  --card-height: 112px;   /* fixed, so a long list has one rhythm (§5.3) */
+  --card-image:   88px;   /* recognisable at arm's length, ~7 cards per screen */
+  --stale-rule:    3px;   /* the left edge on an overdue card (§6) */
+  --touch-min:    44px;   /* §9 */
+
+  /* ── Motion. Almost all of the budget goes to one moment (§7.4). ─────────── */
+  --press:    90ms;
+  --collapse: 180ms;
+  --assemble: 400ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Light is a full peer, not an afterthought. Dark is default because the
+   primary usage context is evening, in bed, one-handed (§2.3). */
+[data-theme="light"] {
+  --bg:             #F2F3F6;
+  --surface:        #FFFFFF;
+  --surface-raised: #FFFFFF;
+  --surface-lit:    #E8EBF1;
+  --line:           #DDE1E8;
+  --line-strong:    #8E95A1;   /* was #C3CAD6 — 1.65:1, now 3.02:1 */
+
+  --text:       #161C26;   /* 17.10:1 on --surface */
+  --text-dim:   #374354;   /* §3.1: #5C6879 (5.66:1) — now 10.03:1 */
+  --text-faint: #525D6C;   /* §3.1: #8C97A6 (2.96:1) — now 6.69:1 */
+
+  --signal:     #A67908;
+  --signal-dim: #D9C089;
+  --settled:    #3D7A70;
+  --drop:       #A8483F;
+}
+
+/* ── Reset, only what is needed ───────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { color-scheme: dark; }
+[data-theme="light"] { color-scheme: light; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: var(--t-base);
+  line-height: var(--t-base-lh);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  /* Prices align only if numerals do (§4.3.5). */
+  font-variant-numeric: tabular-nums;
+}
+
+img { max-width: 100%; display: block; }
+
+/* Visible focus everywhere. Never `outline: none` without a replacement (§9). */
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
+/* The assembly sequence is the one orchestrated moment; everything else answers
+   a direct action. Under reduced motion the card simply appears complete and
+   every other transition drops to nothing (§7.4). */
+@media (prefers-reduced-motion: reduce) {
+  :root { --press: 0ms; --collapse: 0ms; --assemble: 0ms; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
