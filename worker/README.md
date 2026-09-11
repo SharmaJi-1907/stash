@@ -18,7 +18,48 @@ committed. Generate one with:
 openssl rand -base64 32 | tr '+/' '-_' | tr -d '='
 ```
 
-## Two deviations from the documents, both deliberate
+## Routes
+
+    GET  /health                     no auth
+    POST /v1/items                   create — returns 201 before enrichment runs
+    GET  /v1/items                   list
+    GET  /v1/items/:id               one
+    PATCH/DELETE /v1/items/:id       edit, soft delete
+    GET  /v1/sync?since=<ms>         everything changed since a cursor
+    POST /v1/uploads                 an image the client already holds
+    GET  /v1/export                  the whole shelf as one file
+    GET  /img/:key                   image proxy
+
+`/v1/*` is behind auth, then the rate limiter. `cors` is mounted above **both**, on the
+whole app.
+
+**That ordering is load-bearing.** The app is served from pages.dev and the API from
+workers.dev, so every write is preceded by an `OPTIONS` request that carries no
+`Authorization` header. Run through auth it earns a 401, the browser never sends the real
+request, and the symptom is the settings screen reporting the token as wrong. Moving
+`cors` below auth will break the app in a way that looks like a credentials problem.
+
+CORS is not in `docs/02-TRD.md` at all. It was added because the app could not reach the
+API without it.
+
+## Sync, and why the cursor is the server's clock
+
+`GET /v1/sync` returns rows whose `updated_at` is newer than `since`, tombstones included
+— a client that never learns about a deletion shows the row forever, which is the entire
+reason deletes are soft here. `since=0` is a full download and is what a fresh install
+does.
+
+The cursor is the server's timestamp, not the client's. A phone with a wrong clock would
+otherwise skip a window of changes and never know.
+
+## Uploads are capped on bytes read, not on Content-Length
+
+A header is a claim. A streamed body can exceed it, so a cap that trusts the claim is not
+a cap — proved by sending a body larger than the length it declares and watching it
+rejected. Below `MIN_IMAGE_BYTES` the upload is refused as well: a 43-byte tracking beacon
+is a valid PNG, and storing it spends an R2 object to display nothing.
+
+## Three deviations from the documents, all deliberate
 
 **No KV namespace.** `02-TRD.md` §6 and §8 put the rate-limit counter in KV. A counter
 is written on every request; KV allows 1,000 writes/day (`07-RESEARCH.md` §2.1) against
@@ -30,6 +71,19 @@ free of Cloudflare-specific APIs, which `02-TRD.md` §9.2 asks for.
 
 **`src/env.ts`, not `env.d.ts`.** A `.d.ts` file is for declarations that are not imported.
 `Env` is imported by every route and middleware, so it is a normal module.
+
+**`canonicalise` moved to `shared/`.** `02-TRD.md` §10 puts URL canonicalisation here. The
+client needs it too — the app dedupes before it has a network, and a duplicate only the
+server can see arrives after the card is already on the shelf. Two copies would be two
+things to get wrong, and a URL that hashes differently on each side defeats the dedupe
+entirely. `src/routes/items.ts` imports it from `shared/`.
+
+**Measured, not assumed:** in production the effective write ceiling was 120, not 60 —
+Cloudflare served the burst from two isolates and each allowed its own budget. So the real
+limit is 60 x (isolates in play). This is accepted rather than overlooked: the job is to
+bound a runaway loop's D1 and R2 work, and the platform's own hard stop is 100,000
+requests/day. If exactness ever matters the fix is the native rate-limiting binding or a
+Durable Object — both exact, both Cloudflare-only.
 
 ## Known local-dev quirk — not a bug in this Worker
 

@@ -24,6 +24,7 @@ background reading — it is the source of truth. Read in order:
 | 6 | `docs/05-ROADMAP.md` | Phases P0–P5 and definition of done per phase |
 | 7 | `docs/06-AGENT-BUILD-GUIDE.md` | **The operating manual — read before writing code** |
 | 8 | `docs/07-RESEARCH.md` | Why each decision was made, and what was rejected |
+| — | `docs/stash_issue.md` | **Not spec.** The open P2 issues, and what is already ruled not-an-issue |
 
 `docs/06-AGENT-BUILD-GUIDE.md` §1 carries twelve standing rules that override local
 judgement. Its §7 lists the situations where you must stop and ask rather than guess.
@@ -46,14 +47,22 @@ npm run deploy:worker         # wrangler deploy
 npm run typecheck             # all workspaces
 npm test                      # all workspaces
 npm run check:secrets         # run before every commit and push
+npm run check:contrast        # all twenty colour pairs, both themes, plus ink order
+npm run r2                    # stored bytes, % of the 10 GB, what is left
 
 # a single Worker test file
 npm test --workspace worker -- test/<name>.test.ts
 npm run test:fixtures         # the twenty-link enrichment set (P1 onward)
 ```
 
+```bash
+npm run dev     --workspace web     # Vite on :5173
+npm run build   --workspace web     # tsc --noEmit, then vite build
+npm run deploy  --workspace web     # wrangler pages deploy dist --project-name stash
+npm test        --workspace web     # Vitest in Node, IndexedDB via fake-indexeddb
+```
+
 The extension has no build step: load `extension/` unpacked in Chrome or Firefox.
-Web dependencies are deliberately not installed until P2 — see `web/README.md`.
 
 ## Architecture
 
@@ -103,12 +112,12 @@ extension is not an optimisation — it is the only path to a price.
 
 ```
 docs/        the specification — authoritative
-shared/      types.ts: the one definition of Item, Category and every API shape
+shared/      types.ts and canonicalise.ts — imported by all three clients
 worker/      Cloudflare Worker (Hono) — API, enrichment, sync, image proxy
-web/         PWA (React + Vite) — share target, shelf, offline store.  P2.
-extension/   MV3 browser extension — desktop capture.  P1.
+web/         PWA (React + Vite) — share target, shelf, offline store, sync
+extension/   MV3 browser extension — desktop capture, no build step
 prototype/   throwaway visual skeleton, wired to nothing, not authoritative
-scripts/     check-secrets.sh
+scripts/     check-secrets.sh, r2-usage.sh, check-contrast.mjs
 ```
 
 `shared/types.ts` is imported by all three clients and is the only place an `Item` shape
@@ -119,15 +128,22 @@ Wire format is camelCase; the D1 tables are snake_case, and the mapping lives in
 
 ## Current state
 
-P0 and P1 are done, deployed, and verified against real pages in a real browser.
+P0, P1 and P2 are built, deployed, and used against real pages in a real browser.
 
 | Phase | Delivers | State |
 |-------|----------|-------|
 | P0 | Foundation — deploy, database, auth | **done**, live |
 | P1 | Capture and enrich — Worker API, extension | **done**, live |
-| P2 | The app — PWA, share target, shelf, sync | **task 1 passed**, rest not started |
+| P2 | The app — PWA, share target, shelf, sync | **built and live**, open issues below |
 | — | *Stop. Two weeks of real use before P3.* | — |
 | P3–P5 | Organise, decide, price tracking | not started |
+
+P2 is functional, not finished. `docs/stash_issue.md` holds the nine open items —
+two backend, seven interface — with how each was found and which are verified in
+code versus reported from the screen. **Read it before starting work on P2.** It is
+the only file in `docs/` that is not specification: 00–07 were written before any
+code and are authoritative, and that one is a living list that changes as things
+are fixed.
 
 Live at `https://stash-api.sharmaabhinav1907.workers.dev`. The web app is at
 `https://stash-1ju.pages.dev` — `stash.pages.dev` was taken, so Cloudflare added the
@@ -137,8 +153,13 @@ Cloudflare account because R2 cannot be enabled without one — a knowing depart
 `docs/02-TRD.md` C1, decided by the user on 2026-09-09 and recorded in
 `.credentials.local.md`.
 
-297 tests, all passing. The fixture set clears its bar: `docs/01-PRD.md` F2 wants 16 of 20
-usable and production gives 17.
+458 tests, all passing — 346 in the Worker, 112 in the app. Typecheck is clean across
+four workspaces and `npm run check:contrast` proves 20 of 20 colour pairs. The fixture
+set clears its bar: `docs/01-PRD.md` F2 wants 16 of 20 usable and production gives 17.
+
+None of those checks catches anything in `docs/stash_issue.md`. Every open item is
+either something the tests do not look at or something only a person looking at the
+screen can see, which is worth remembering before trusting a green run as "done".
 
 **`docs/05-ROADMAP.md` P1's last criterion — amazon.in through the extension captures the
 correct price — is met.** Verified on real pages, 2026-09-10:
@@ -163,8 +184,9 @@ exactly the same `.a-price .a-offscreen` markup as the real one.
 guards lived only in the generic scan, on the assumption that a selector hit is more
 trustworthy. It is not — it is only faster. Both wrong prices came through selectors.
 
-Everything under `web/src/` is still a stub carrying its spec reference and phase. The
-Worker and the extension are real.
+All three clients are real now. `web/share-target-check/` is not — it is the throwaway
+probe that proved the share target on the phone, kept because its README records what was
+measured, and wired to nothing.
 
 **P2 task 1 — the Android share target — passed on 2026-09-10.** `docs/01-PRD.md` R3 calls
 it the highest-risk assumption in the system, and `docs/05-ROADMAP.md` gates the phase on
@@ -184,6 +206,40 @@ the two cancelled into `308 location: /share` — an endless loop on the exact p
 target posts to, with `POST` answering 405. Pages already serves `share.html` at `/share`;
 the rule was removed. On a phone this is indistinguishable from the share target not
 working at all.
+
+## What P2 built
+
+Twenty-two commits on `P2/pwa-and-shelf`, pushed. `main` is untouched and still on P1 —
+merging is the user's, not yours.
+
+**Worker.** Four things the app cannot work without: `GET /v1/sync` (everything changed
+since a cursor, tombstones included), `POST /v1/uploads` (an image the share sheet handed
+over, which no URL points at), `GET /v1/export` (the whole shelf as one file — the exit),
+and CORS.
+
+**CORS is not in `docs/02-TRD.md` at all and the app cannot reach the API without it.**
+The app is served from pages.dev and the API from workers.dev, so every write is preceded
+by an `OPTIONS` request carrying no `Authorization` header. Sent through auth it earned a
+401, the browser never made the real request, and the settings screen reported the token
+as wrong. `cors` is therefore mounted on the whole app *ahead of* `/v1`'s auth. Anything
+later that moves it below auth will break the app in a way that reads as a bad token.
+
+**App.** IndexedDB via Dexie is authoritative for the UI; a save writes locally, renders,
+then queues. An outbox retries with backoff and refuses to retry a non-429 4xx, because
+the server has already refused that shape and sending it again is a loop. A pull runs on
+open, on focus and every five minutes, and advances its cursor only after the whole batch
+is written.
+
+**`listLocal` enforces `docs/01-PRD.md` F7.3 and this is load-bearing.** Bought and dropped
+items leave the main shelf and stay in the database, reachable and restorable. It was
+missed at first and the shelf simply kept everything — which defeats principle 2 and walks
+straight into R1, the risk the PRD calls fatal. If a change makes decided items visible on
+the main shelf again, that is a regression, not a preference.
+
+**Fonts are self-hosted**, nine files, IBM Plex Sans Devanagari declared under the same
+family name so Hindi falls through without markup deciding. The three Latin weights are
+byte-identical because that file is a *variable* font — see `docs/stash_issue.md` B2 before
+"fixing" anything about it.
 
 ## Deviations from the documents
 
@@ -240,8 +296,30 @@ whose most important field is its least legible one has an ordering problem.
 `npm run check:contrast` proves all twenty pairs and fails if anyone puts the old values
 back. Verified by putting them back.
 
+**Measured again on the phone, and raised a second time.** 4.53:1 passes §9 and was still
+hard to read on the actual device. The whole ink ladder went up and the checker gained an
+order invariant, so no later edit can make one token readable by making the one above it
+worse. Dark is now 14.03 / 9.01 / 6.01 and light 17.10 / 10.03 / 6.69.
+
+The light theme has a hole in it — `tokens.css` defines light only under
+`[data-theme="light"]`, so the "system" setting lands back on `:root` and renders dark on a
+light phone, while `theme.ts` reports light. `docs/stash_issue.md` U5.
+
+**`canonicalise` lives in `shared/`, not the Worker.** `docs/02-TRD.md` §10 puts URL
+canonicalisation server-side. The client needs it too: the app dedupes a save before it
+has a network, and a duplicate only the server can see arrives after the card is already
+on the shelf. Two copies would be two things to get wrong, and a URL that hashes
+differently on each side defeats the dedupe entirely. So there is one copy, in `shared/`.
+`shared/tsconfig.json` gains the DOM lib for `URL` and `crypto.subtle` — DOM-only APIs
+remain forbidden there, and there is a comment in the file saying so.
+
 **`worker/src/env.ts`, not `env.d.ts`.** `Env` is imported by every route and middleware,
 so it is a normal module rather than an ambient declaration.
+
+**No KV, no Durable Object, and `vitest.config.ts` uses the `cloudflareTest()` plugin.**
+`defineWorkersConfig` and a `test.pool` entry are both rejected by
+`@cloudflare/vitest-pool-workers` 0.22; the plugin is the current answer. Bindings must be
+declared into the global `Cloudflare.Env` for `cloudflare:test` to type them.
 
 ## Two places where correctness is subtle
 

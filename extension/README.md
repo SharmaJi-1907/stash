@@ -70,3 +70,29 @@ scraped payload turning into a stored price — is covered by tests in
 `worker/test/items.test.ts`. The parts that cannot be tested without a browser are the
 context menus, the keyboard command, and the selectors in `content.js` firing against
 a real Amazon or Flipkart page. Those need loading it and trying it.
+
+## It captures; it does not browse
+
+There is no shelf here and there will not be one. `docs/02-TRD.md` §3.2: "its job is
+capture, not browsing." Items saved from the extension appear in the app once sync runs;
+items saved in the app do not appear here, because nothing here displays items.
+
+That asymmetry is by design and is not a bug to be reported twice.
+
+## Known gap
+
+The scrape reads `product:price:amount` and not `og:price:amount`. Shopify writes the
+second spelling, so a Shopify store's price is on the page, parsed, and dropped. Measured
+on `quartzcomponents.com`, 2026-09-10. `docs/stash_issue.md` B1 — the Worker's OpenGraph
+extractor has the identical gap, and both should be fixed in the same change.
+
+## What the guards are for, and where they must live
+
+`insideAnotherProduct()` skips sponsored strips, carousels and "similar items".
+`isWasPrice()` skips struck-through amounts, which Amazon writes with exactly the same
+`.a-price .a-offscreen` markup as the real price.
+
+**Both apply to the selector path, not only the generic scan.** That was the actual bug
+that put two wrong prices on a real shelf: the guards lived only in the fallback, on the
+assumption that a selector hit is more trustworthy. It is not — it is only faster, and
+both wrong prices came through selectors.
