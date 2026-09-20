@@ -8,6 +8,16 @@
  *
  * Three weights, not six. Every extra weight is bytes on that same path.
  *
+ * ── B2 — one file per subset, not three ─────────────────────────────────────
+ *
+ * The 400/500/600 Latin files were byte-identical, and so were the three
+ * latin-ext files — this is a *variable* font (fvar/HVAR/MVAR/STAT tables
+ * confirmed by decoding the woff2 table directory), so one file already
+ * covers 400 to 700. Requesting it under three URLs cost 153 KB of duplicate
+ * downloads against a 200 KB budget. One @font-face per subset now, with
+ * `font-weight: 400 700`, so the browser picks the instance it needs from the
+ * one file already on the wire. Only the -400- files are kept on disk.
+ *
  * ── Devanagari is a separate family, not a subset ───────────────────────────
  *
  * §4.1 chooses Plex because it has "a real Devanagari cut that shares its
@@ -27,63 +37,23 @@
  * the large part of what is on disk here.
  */
 
-/* IBM Plex Sans 400 — latin */
+/* IBM Plex Sans 400–700 — latin (variable font, one file covers all three weights) */
 @font-face {
   font-family: "IBM Plex Sans";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 400 700;
   font-display: swap;
   src: url("/fonts/plex-400-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-/* IBM Plex Sans 400 — latin-ext */
+/* IBM Plex Sans 400–700 — latin-ext (variable font, one file covers all three weights) */
 @font-face {
   font-family: "IBM Plex Sans";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 400 700;
   font-display: swap;
   src: url("/fonts/plex-400-latin-ext.woff2") format("woff2");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-/* IBM Plex Sans 500 — latin */
-@font-face {
-  font-family: "IBM Plex Sans";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/fonts/plex-500-latin.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-/* IBM Plex Sans 500 — latin-ext */
-@font-face {
-  font-family: "IBM Plex Sans";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url("/fonts/plex-500-latin-ext.woff2") format("woff2");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-/* IBM Plex Sans 600 — latin */
-@font-face {
-  font-family: "IBM Plex Sans";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/fonts/plex-600-latin.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-/* IBM Plex Sans 600 — latin-ext */
-@font-face {
-  font-family: "IBM Plex Sans";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url("/fonts/plex-600-latin-ext.woff2") format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
