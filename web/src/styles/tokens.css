@@ -147,6 +147,32 @@
   --drop:       #A8483F;
 }
 
+/* U5 — "system" was landing back on :root, which is dark, so a phone set to
+   light rendered dark while theme.ts reported light. This mirrors the
+   [data-theme="light"] block under the OS preference, guarded so an explicit
+   [data-theme="dark"] override still wins (§10: system default, user override). */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:             #F2F3F6;
+    --surface:        #FFFFFF;
+    --surface-raised: #FFFFFF;
+    --surface-lit:    #E8EBF1;
+    --line:           #DDE1E8;
+    --line-strong:    #8E95A1;
+
+    --text:       #161C26;
+    --text-dim:   #374354;
+    --text-faint: #525D6C;
+
+    --signal:     #A67908;
+    --signal-dim: #D9C089;
+    --settled:    #3D7A70;
+    --drop:       #A8483F;
+
+    color-scheme: light;
+  }
+}
+
 /* ── Reset, only what is needed ───────────────────────────────────────────── */
 
 *, *::before, *::after { box-sizing: border-box; }
