@@ -20,9 +20,12 @@ export function fromOpenGraph(c: Collected): Extracted | null {
   const title = c.og.title || c.twitter.title;
   if (!title?.trim()) return null;
 
+  // B1 — Shopify writes og:price:amount (collect.ts strips the "og:" prefix
+  // down to "price:amount"), not product:price:amount. Both spellings appear
+  // in the wild; prefer product: when a page emits both.
   const price = parsePrice(
-    c.og['product:price:amount'] ?? null,
-    c.og['product:price:currency'] ?? null,
+    c.og['product:price:amount'] ?? c.og['price:amount'] ?? null,
+    c.og['product:price:currency'] ?? c.og['price:currency'] ?? null,
   );
 
   const usedTwitterForTitle = !c.og.title && Boolean(c.twitter.title);

@@ -252,14 +252,18 @@ function scrape() {
     (o) => (o && typeof o === 'object' ? [o.offers ?? o] : []),
   ).flat().find((o) => o && (o.price !== undefined || o.lowPrice !== undefined));
 
+  // B1 — Shopify writes og:price:amount, not product:price:amount. Check both
+  // spellings, preferring product: when a page emits both.
   const priceText =
     (offer && String(offer.price ?? offer.lowPrice)) ||
     meta('meta[property="product:price:amount"]') ||
+    meta('meta[property="og:price:amount"]') ||
     visiblePrice();
 
   const currency =
     (offer && typeof offer.priceCurrency === 'string' ? offer.priceCurrency : '') ||
     meta('meta[property="product:price:currency"]') ||
+    meta('meta[property="og:price:currency"]') ||
     '';
 
   const scraped = {

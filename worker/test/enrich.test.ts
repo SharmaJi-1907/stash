@@ -102,6 +102,27 @@ describe('Open Graph and Twitter Card', () => {
     expect(r!.price).toEqual({ amount: 149900, currency: 'INR' });
   });
 
+  // B1 — Shopify writes og:price:amount, not product:price:amount. Measured
+  // on quartzcomponents.com, 2026-09-10.
+  it('reads Shopify\'s og:price:amount spelling', async () => {
+    const r = await from(`<html><head>
+      <meta property="og:title" content="Thing">
+      <meta property="og:price:amount" content="138.00">
+      <meta property="og:price:currency" content="INR"></head></html>`);
+    expect(r!.quality).toBe('rich');
+    expect(r!.price).toEqual({ amount: 13800, currency: 'INR' });
+  });
+
+  it('prefers product: over og: price when a page emits both', async () => {
+    const r = await from(`<html><head>
+      <meta property="og:title" content="Thing">
+      <meta property="product:price:amount" content="1499.00">
+      <meta property="product:price:currency" content="INR">
+      <meta property="og:price:amount" content="1.00">
+      <meta property="og:price:currency" content="USD"></head></html>`);
+    expect(r!.price).toEqual({ amount: 149900, currency: 'INR' });
+  });
+
   it('falls back to Twitter Card when Open Graph has no title', async () => {
     const r = await from(`<html><head>
       <meta name="twitter:title" content="From Twitter">
