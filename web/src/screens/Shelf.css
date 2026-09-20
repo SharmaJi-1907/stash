@@ -12,6 +12,29 @@
 /* Shelf health: informational, never blocking (01-PRD.md F11.4). */
 .shelf__count { margin: 0; font-size: var(--t-sm); color: var(--text-dim); }
 
+/* U3 — the shelf and its decided archive as two peer tabs, not a footnote
+   link. Same visual language as .shelf__view, stretched to share the row
+   evenly so neither reads as the primary and the other as an afterthought. */
+.shelf__scope { display: flex; gap: var(--s1); }
+
+.shelf__scope-tab {
+  flex: 1;
+  min-height: var(--touch-min);
+  padding: 0 var(--s3);
+  font: inherit;
+  font-size: var(--t-sm);
+  color: var(--text-dim);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.shelf__scope-tab.is-on {
+  color: var(--text);
+  background: var(--surface-lit);
+  border-color: var(--line-strong);
+}
+
 .shelf__views { display: flex; gap: var(--s1); }
 
 .shelf__view {
@@ -44,15 +67,3 @@
   align-items: center;
 }
 
-/* A link inside a line of text, not a control competing with the toggles. */
-.shelf__link {
-  padding: 0;
-  font: inherit;
-  font-size: var(--t-sm);
-  color: var(--signal);
-  background: none;
-  border: 0;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}

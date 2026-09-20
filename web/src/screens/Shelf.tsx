@@ -161,21 +161,43 @@ export function Shelf({ onOpen }: ShelfProps) {
 
   if (items === null) return null;
 
+  // U3 — the shelf and its archive are two peers, not a shelf with a footnote
+  // link hanging off it. Same control in both the empty and populated states,
+  // so switching to an empty "decided" list doesn't strand the user there.
+  // Decided items are kept, findable and restorable — they are just not on
+  // the shelf. 01-PRD.md F7.3
+  const scopeTabs = (
+    <div className="shelf__scope" role="tablist" aria-label="Shelf or bought & dropped">
+      <button type="button" role="tab" aria-selected={scope === 'shelf'}
+              className={`shelf__scope-tab${scope === 'shelf' ? ' is-on' : ''}`}
+              onClick={() => setScope('shelf')}>
+        Shelf
+      </button>
+      <button type="button" role="tab" aria-selected={scope === 'decided'}
+              className={`shelf__scope-tab${scope === 'decided' ? ' is-on' : ''}`}
+              onClick={() => setScope('decided')}>
+        Bought & dropped
+      </button>
+    </div>
+  );
+
   if (items.length === 0) {
     // An empty state is an instruction, not an apology (§7.6).
-    return scope === 'decided' ? (
-      <div className="empty">
-        <strong>Nothing decided yet.</strong>
-        <span>Items you buy or drop are kept here.</span>
-        <button type="button" className="shelf__view" onClick={() => setScope('shelf')}>
-          Back to the shelf
-        </button>
-      </div>
-    ) : (
-      <div className="empty">
-        <strong>Nothing on the shelf yet.</strong>
-        <span>Share a link here from any app, or paste one.</span>
-        <a className="empty__action" href="/add">Paste a link</a>
+    return (
+      <div className="shelf">
+        {scopeTabs}
+        {scope === 'decided' ? (
+          <div className="empty">
+            <strong>Nothing decided yet.</strong>
+            <span>Items you buy or drop are kept here.</span>
+          </div>
+        ) : (
+          <div className="empty">
+            <strong>Nothing on the shelf yet.</strong>
+            <span>Share a link here from any app, or paste one.</span>
+            <a className="empty__action" href="/add">Paste a link</a>
+          </div>
+        )}
       </div>
     );
   }
@@ -185,18 +207,12 @@ export function Shelf({ onOpen }: ShelfProps) {
 
   return (
     <div className="shelf">
+      {scopeTabs}
       <div className="shelf__bar">
         <p className="shelf__count">
           {scope === 'decided'
             ? `${items.length} decided`
             : `${open} open${stale > 0 ? ` · ${stale} waiting on a decision` : ''}`}
-          {' · '}
-          {/* Decided items are kept, findable and restorable — they are just not
-              on the shelf. 01-PRD.md F7.3 */}
-          <button type="button" className="shelf__link"
-                  onClick={() => setScope(scope === 'shelf' ? 'decided' : 'shelf')}>
-            {scope === 'shelf' ? 'bought & dropped' : 'back to the shelf'}
-          </button>
         </p>
         <div className="shelf__views" role="group" aria-label="View">
           <button type="button" className={`shelf__view${view === 'stack' ? ' is-on' : ''}`}
