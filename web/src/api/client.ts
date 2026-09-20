@@ -10,6 +10,7 @@
 
 import type {
   CreateItemRequest, CreateItemResponse, Item, SyncResponse, UpdateItemRequest,
+  UploadImageResponse,
 } from '../../../shared/types';
 
 const SETTINGS = 'stash:settings';
@@ -100,6 +101,32 @@ export const api = {
 
   sync: (since: number) =>
     request<SyncResponse>(`/sync?since=${since}`),
+
+  /** U6 — the recovery path when enrichment found no image or the wrong one.
+   *  Multipart, not JSON, so this bypasses `request()` rather than bending it. */
+  uploadImage: async (file: Blob): Promise<UploadImageResponse> => {
+    const { apiBase, deviceToken } = loadSettings();
+    if (!apiBase || !deviceToken) throw new NotConfigured();
+
+    const form = new FormData();
+    form.append('image', file);
+
+    const response = await fetch(`${apiBase}/uploads/image`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${deviceToken}` },
+      body: form,
+    });
+
+    if (response.status === 401) throw new PermanentError('Token rejected', 401);
+    if (response.status === 413) throw new PermanentError('Too large', 413);
+    if (response.status >= 400 && response.status < 500) {
+      const body = await response.json().catch(() => null) as { error?: { message?: string } } | null;
+      throw new PermanentError(body?.error?.message ?? `Request failed (${response.status})`, response.status);
+    }
+    if (!response.ok) throw new Error(`Server error (${response.status})`);
+
+    return response.json() as Promise<UploadImageResponse>;
+  },
 
   /** Used by settings to prove the address and token before trusting them. */
   ping: () => request<{ items: Item[] }>('/items?limit=1'),

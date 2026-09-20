@@ -210,6 +210,10 @@ items.patch('/:id', async (c) => {
   if ('categoryId' in body) fields.category_id = body.categoryId ?? null;
   if ('priceAmount' in body) fields.price_amount = body.priceAmount ?? null;
   if ('priceCurrency' in body) fields.price_currency = body.priceCurrency ?? null;
+  // U6 — the recovery path when enrichment found no image or the wrong one.
+  // The key itself was already written by POST /v1/uploads/image; this just
+  // points the item at it.
+  if ('imageKey' in body) fields.image_key = body.imageKey ?? null;
 
   if (body.priority !== undefined) {
     if (!ITEM_PRIORITIES.includes(body.priority)) {

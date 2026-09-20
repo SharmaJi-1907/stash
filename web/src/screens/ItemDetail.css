@@ -12,6 +12,27 @@
 }
 .detail__image--none { display: block; }
 
+/* U6 — the recovery path when enrichment found no image or the wrong one. */
+.detail__image-wrap { position: relative; }
+
+.detail__image-action {
+  position: absolute;
+  right: var(--s3);
+  bottom: var(--s3);
+  min-height: var(--touch-min);
+  padding: 0 var(--s3);
+  font: inherit;
+  font-size: var(--t-sm);
+  color: var(--text);
+  background: var(--surface-lit);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.detail__image-action:disabled { cursor: default; opacity: 0.7; }
+
+.detail__image-error { margin: 0; font-size: var(--t-sm); color: var(--drop); }
+
 .detail__title {
   margin: 0;
   font-size: var(--t-lg);

@@ -275,6 +275,17 @@ describe('the lifecycle', () => {
     expect((await (await patch(id, { note: null })).json<any>()).note).toBeNull();
   });
 
+  // U6 — the recovery path when enrichment found no image or the wrong one.
+  // The key itself comes from POST /v1/uploads/image; this just points the
+  // item at it. docs/stash_issue.md U6.
+  it('an image key can be set and cleared', async () => {
+    const r = await post({ id: uuid(), url: 'https://example.com/img', source: 'paste' });
+    const id = (await r.json<any>()).item.id;
+    expect((await (await patch(id, { imageKey: 'img/upload/abc' })).json<any>()).imageKey)
+      .toBe('img/upload/abc');
+    expect((await (await patch(id, { imageKey: null })).json<any>()).imageKey).toBeNull();
+  });
+
   it('editing a note does not touch reviewedAt', async () => {
     // Spec 02-TRD.md §4.1: only an explicit "still want this" resets the clock.
     const r = await post({ id: uuid(), url: 'https://example.com/r', source: 'paste' });

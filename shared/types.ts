@@ -270,6 +270,9 @@ export interface UpdateItemRequest {
   priority?: ItemPriority;
   priceAmount?: MinorUnits | null;
   priceCurrency?: CurrencyCode | null;
+  /** R2 key from POST /v1/uploads/image — the recovery path when enrichment
+   *  found no image, or found the wrong one. U6: docs/stash_issue.md */
+  imageKey?: string | null;
 }
 
 /** GET /v1/items query string. Spec: 02-TRD.md §5 */

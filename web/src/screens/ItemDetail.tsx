@@ -9,9 +9,10 @@
  * only be worked with a thumb cannot be worked with a keyboard at all.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { deleteLocal, getLocal, updateLocal } from '../db/local';
 import { flushOutbox } from '../sync/outbox';
+import { api } from '../api/client';
 import { ageInDays, formatAge, formatPrice, imageUrl, staleness } from '../lib/format';
 import { navigate } from '../router';
 import type { LocalItem } from '../db/db';
@@ -23,6 +24,12 @@ export interface ItemDetailProps { id: string }
 export function ItemDetail({ id }: ItemDetailProps) {
   const [item, setItem] = useState<LocalItem | null | undefined>(undefined);
   const [note, setNote] = useState('');
+  // U6 — enrichment finds no image on most bot-walled sites, and no screen
+  // could set one by hand even though POST /v1/uploads/image already exists
+  // and is tested. docs/stash_issue.md U6.
+  const [imageBusy, setImageBusy] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     void getLocal(id).then((row) => {
@@ -68,13 +75,41 @@ export function ItemDetail({ id }: ItemDetailProps) {
     navigate('/');
   }
 
+  async function onImageChosen(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';   // so choosing the same file twice fires change again
+    if (!file) return;
+
+    setImageError(null);
+    setImageBusy(true);
+    try {
+      const { key } = await api.uploadImage(file);
+      const next = await updateLocal(item!.id, { imageKey: key });
+      if (next) setItem(next);
+      void flushOutbox();
+    } catch (err) {
+      setImageError(err instanceof Error ? err.message : 'Could not upload that image');
+    } finally {
+      setImageBusy(false);
+    }
+  }
+
   return (
     <article className="detail">
-      {src ? (
-        <img className="detail__image" src={src} alt={title} loading="eager" decoding="async" />
-      ) : (
-        <div className="detail__image detail__image--none" aria-hidden="true" />
-      )}
+      <input ref={fileInput} type="file" accept="image/*" hidden onChange={(e) => void onImageChosen(e)} />
+
+      <div className="detail__image-wrap">
+        {src ? (
+          <img className="detail__image" src={src} alt={title} loading="eager" decoding="async" />
+        ) : (
+          <div className="detail__image detail__image--none" aria-hidden="true" />
+        )}
+        <button type="button" className="detail__image-action" disabled={imageBusy}
+                onClick={() => fileInput.current?.click()}>
+          {imageBusy ? 'Uploading…' : src ? 'Replace image' : 'Add image'}
+        </button>
+      </div>
+      {imageError ? <p className="detail__image-error" role="alert">{imageError}</p> : null}
 
       <h2 className="detail__title">{title}</h2>
 
